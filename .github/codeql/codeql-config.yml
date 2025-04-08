@@ -1,4 +1,4 @@
-name: "Custom CodeQL Configuration"
+name: Custom CodeQL Configuration
 
 # Disable default queries to use our custom ones
 disable-default-queries: true
@@ -11,10 +11,10 @@ queries:
   - uses: security-extended
   # Add custom queries for PHP-specific security issues
   - name: PHP Security Queries
-    uses: ./security-queries/php
+    uses: wordpress-gmail-cli/php-security-queries
   # Add custom queries for JavaScript-specific security issues
   - name: JavaScript Security Queries
-    uses: ./security-queries/javascript
+    uses: wordpress-gmail-cli/javascript-security-queries
 
 # Define paths to exclude from analysis
 paths-ignore:
