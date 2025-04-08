@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2025-04-07
 
-### Added
+### Added Features
+
 - SSL security enhancement script to fix issues reported by WP-Encryption plugin
 - Automatic configuration of secure headers and TLS settings
 - HTTP to HTTPS redirect implementation
@@ -15,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for both Apache and Nginx web servers
 - WP Encryption plugin installation and configuration
 
-### Security
+### Security Enhancements
+
 - HSTS (HTTP Strict Transport Security) implementation
 - Secure cookie configuration
 - Modern TLS protocols and cipher suites
@@ -25,7 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] - 2025-04-07
 
-### Added
+### Initial Features
+
 - Initial release of WordPress Gmail CLI
 - Google API OAuth2 authentication for sending emails
 - Automatic token refreshing via cron job
@@ -36,7 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive README with detailed setup instructions
 - Support for Digital Ocean and other hosts that block standard SMTP ports
 
-### Security
+### Security Measures
+
 - Secure credential storage with proper file permissions
 - OAuth2 authentication instead of less secure app passwords
 - Token-based authentication for improved security
