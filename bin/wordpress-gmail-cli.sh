@@ -17,136 +17,136 @@ RESET="\033[0m"
 
 # Function to display script usage
 usage() {
-    echo -e "${BOLD}WordPress Gmail CLI${RESET}"
-    echo "A simple CLI tool to configure WordPress and Postfix for Gmail using Google API"
-    echo
-    echo -e "${BOLD}Usage:${RESET}"
-    echo "  $0 [options]"
-    echo
-    echo -e "${BOLD}Options:${RESET}"
-    echo "  -e, --email EMAIL           Gmail address to use for sending emails"
-    echo "  -c, --client-id ID          Google API Client ID"
-    echo "  -s, --client-secret SECRET  Google API Client Secret"
-    echo "  -r, --refresh-token TOKEN   Google API Refresh Token"
-    echo "  -d, --domain DOMAIN         Your website domain (e.g., example.com)"
-    echo "  -w, --wp-path PATH          Path to WordPress installation (default: /var/www/html)"
-    echo "  -a, --social-auth           Enable social authentication (Google and Facebook login)"
-    echo "  --google-auth-id ID         Google OAuth Client ID for login (if different from email client ID)"
-    echo "  --google-auth-secret SECRET Google OAuth Client Secret for login"
-    echo "  --facebook-app-id ID        Facebook App ID for login"
-    echo "  --facebook-app-secret SECRET Facebook App Secret for login"
-    echo "  -h, --help                  Display this help message"
-    echo
-    echo -e "${BOLD}Example:${RESET}"
-    echo "  $0 --email your-email@gmail.com --client-id your-client-id --client-secret your-client-secret --refresh-token your-refresh-token --domain example.com"
-    echo "  $0 --email your-email@gmail.com --client-id your-client-id --client-secret your-client-secret --refresh-token your-refresh-token --domain example.com --social-auth --google-auth-id your-oauth-client-id --google-auth-secret your-oauth-client-secret --facebook-app-id your-facebook-app-id --facebook-app-secret your-facebook-app-secret"
-    exit 1
+	echo -e "${BOLD}WordPress Gmail CLI${RESET}"
+	echo "A simple CLI tool to configure WordPress and Postfix for Gmail using Google API"
+	echo
+	echo -e "${BOLD}Usage:${RESET}"
+	echo "  $0 [options]"
+	echo
+	echo -e "${BOLD}Options:${RESET}"
+	echo "  -e, --email EMAIL           Gmail address to use for sending emails"
+	echo "  -c, --client-id ID          Google API Client ID"
+	echo "  -s, --client-secret SECRET  Google API Client Secret"
+	echo "  -r, --refresh-token TOKEN   Google API Refresh Token"
+	echo "  -d, --domain DOMAIN         Your website domain (e.g., example.com)"
+	echo "  -w, --wp-path PATH          Path to WordPress installation (default: /var/www/html)"
+	echo "  -a, --social-auth           Enable social authentication (Google and Facebook login)"
+	echo "  --google-auth-id ID         Google OAuth Client ID for login (if different from email client ID)"
+	echo "  --google-auth-secret SECRET Google OAuth Client Secret for login"
+	echo "  --facebook-app-id ID        Facebook App ID for login"
+	echo "  --facebook-app-secret SECRET Facebook App Secret for login"
+	echo "  -h, --help                  Display this help message"
+	echo
+	echo -e "${BOLD}Example:${RESET}"
+	echo "  $0 --email your-email@gmail.com --client-id your-client-id --client-secret your-client-secret --refresh-token your-refresh-token --domain example.com"
+	echo "  $0 --email your-email@gmail.com --client-id your-client-id --client-secret your-client-secret --refresh-token your-refresh-token --domain example.com --social-auth --google-auth-id your-oauth-client-id --google-auth-secret your-oauth-client-secret --facebook-app-id your-facebook-app-id --facebook-app-secret your-facebook-app-secret"
+	exit 1
 }
 
 # Function to log messages
 log() {
-    local level=$1
-    local message=$2
-    local color=$RESET
-    
-    case $level in
-        "INFO") color=$BLUE ;;
-        "SUCCESS") color=$GREEN ;;
-        "WARNING") color=$YELLOW ;;
-        "ERROR") color=$RED ;;
-    esac
-    
-    echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${color}${level}${RESET}: ${message}"
+	local level=$1
+	local message=$2
+	local color=${RESET}
+
+	case ${level} in
+	"INFO") color=${BLUE} ;;
+	"SUCCESS") color=${GREEN} ;;
+	"WARNING") color=${YELLOW} ;;
+	"ERROR") color=${RED} ;;
+	esac
+
+	echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${color}${level}${RESET}: ${message}"
 }
 
 # Function to check if command exists
 command_exists() {
-    command -v "$1" >/dev/null 2>&1
+	command -v "$1" >/dev/null 2>&1
 }
 
 # Function to check if running as root
 check_root() {
-    if [ "$(id -u)" -ne 0 ]; then
-        log "ERROR" "This script must be run as root"
-        exit 1
-    fi
+	if [[ "$(id -u)" -ne 0 ]]; then
+		log "ERROR" "This script must be run as root"
+		exit 1
+	fi
 }
 
 # Function to check dependencies
 check_dependencies() {
-    log "INFO" "Checking dependencies..."
-    
-    local missing_deps=()
-    
-    if ! command_exists postfix; then
-        missing_deps+=("postfix")
-    fi
-    
-    if ! command_exists php; then
-        missing_deps+=("php")
-    fi
-    
-    if ! command_exists curl; then
-        missing_deps+=("curl")
-    fi
-    
-    if ! command_exists jq; then
-        missing_deps+=("jq")
-    fi
-    
-    if [ ${#missing_deps[@]} -ne 0 ]; then
-        log "ERROR" "Missing dependencies: ${missing_deps[*]}"
-        log "INFO" "Please install the missing dependencies and try again"
-        log "INFO" "You can install them using: apt-get install ${missing_deps[*]}"
-        exit 1
-    fi
-    
-    log "SUCCESS" "All dependencies are installed"
+	log "INFO" "Checking dependencies..."
+
+	local missing_deps=()
+
+	if ! command_exists postfix; then
+		missing_deps+=("postfix")
+	fi
+
+	if ! command_exists php; then
+		missing_deps+=("php")
+	fi
+
+	if ! command_exists curl; then
+		missing_deps+=("curl")
+	fi
+
+	if ! command_exists jq; then
+		missing_deps+=("jq")
+	fi
+
+	if [[ ${#missing_deps[@]} -ne 0 ]]; then
+		log "ERROR" "Missing dependencies: ${missing_deps[*]}"
+		log "INFO" "Please install the missing dependencies and try again"
+		log "INFO" "You can install them using: apt-get install ${missing_deps[*]}"
+		exit 1
+	fi
+
+	log "SUCCESS" "All dependencies are installed"
 }
 
 # Function to get a new access token using the refresh token
 get_access_token() {
-    log "INFO" "Getting access token from Google API..."
-    
-    local token_response
-    token_response=$(curl -s --request POST \
-        --url "https://oauth2.googleapis.com/token" \
-        --header "Content-Type: application/x-www-form-urlencoded" \
-        --data "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&refresh_token=${REFRESH_TOKEN}&grant_type=refresh_token")
-    
-    if echo "$token_response" | grep -q "error"; then
-        log "ERROR" "Failed to get access token: $(echo "$token_response" | jq -r '.error_description // .error')"
-        exit 1
-    fi
-    
-    ACCESS_TOKEN=$(echo "$token_response" | jq -r '.access_token')
-    EXPIRES_IN=$(echo "$token_response" | jq -r '.expires_in')
-    
-    if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
-        log "ERROR" "Failed to extract access token from response"
-        exit 1
-    fi
-    
-    log "SUCCESS" "Successfully obtained access token (expires in ${EXPIRES_IN}s)"
-    return 0
+	log "INFO" "Getting access token from Google API..."
+
+	local token_response
+	token_response=$(curl -s --request POST \
+		--url "https://oauth2.googleapis.com/token" \
+		--header "Content-Type: application/x-www-form-urlencoded" \
+		--data "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&refresh_token=${REFRESH_TOKEN}&grant_type=refresh_token")
+
+	if echo "${token_response}" | grep -q "error"; then
+		log "ERROR" "Failed to get access token: $(echo "${token_response}" | jq -r '.error_description // .error')"
+		exit 1
+	fi
+
+	ACCESS_TOKEN=$(echo "${token_response}" | jq -r '.access_token')
+	EXPIRES_IN=$(echo "${token_response}" | jq -r '.expires_in')
+
+	if [[ -z ${ACCESS_TOKEN} ]] || [[ ${ACCESS_TOKEN} == "null" ]]; then
+		log "ERROR" "Failed to extract access token from response"
+		exit 1
+	fi
+
+	log "SUCCESS" "Successfully obtained access token (expires in ${EXPIRES_IN}s)"
+	return 0
 }
 
 # Function to configure Postfix
 configure_postfix() {
-    log "INFO" "Configuring Postfix for Gmail API..."
-    
-    # Backup original configuration
-    if [ -f /etc/postfix/main.cf ]; then
-        cp /etc/postfix/main.cf /etc/postfix/main.cf.backup.$(date +%Y%m%d%H%M%S)
-        log "INFO" "Backed up original Postfix configuration"
-    fi
-    
-    # Create credentials directory if it doesn't exist
-    mkdir -p /etc/postfix/gmail-api
-    chmod 700 /etc/postfix/gmail-api
-    
-    # Store Google API credentials
-    cat > /etc/postfix/gmail-api/credentials.json << EOF
+	log "INFO" "Configuring Postfix for Gmail API..."
+
+	# Backup original configuration
+	if [[ -f /etc/postfix/main.cf ]]; then
+		cp /etc/postfix/main.cf /etc/postfix/main.cf.backup.$(date +%Y%m%d%H%M%S)
+		log "INFO" "Backed up original Postfix configuration"
+	fi
+
+	# Create credentials directory if it doesn't exist
+	mkdir -p /etc/postfix/gmail-api
+	chmod 700 /etc/postfix/gmail-api
+
+	# Store Google API credentials
+	cat >/etc/postfix/gmail-api/credentials.json <<EOF
 {
   "client_id": "${CLIENT_ID}",
   "client_secret": "${CLIENT_SECRET}",
@@ -154,10 +154,10 @@ configure_postfix() {
   "email": "${EMAIL}"
 }
 EOF
-    chmod 600 /etc/postfix/gmail-api/credentials.json
-    
-    # Create token refresh script
-    cat > /etc/postfix/gmail-api/refresh-token.sh << 'EOF'
+	chmod 600 /etc/postfix/gmail-api/credentials.json
+
+	# Create token refresh script
+	cat >/etc/postfix/gmail-api/refresh-token.sh <<'EOF'
 #!/bin/bash
 
 CREDENTIALS_FILE="/etc/postfix/gmail-api/credentials.json"
@@ -201,17 +201,17 @@ chmod 600 "$TOKEN_FILE"
 
 echo "Access token refreshed successfully (expires in ${EXPIRES_IN}s)"
 EOF
-    chmod 700 /etc/postfix/gmail-api/refresh-token.sh
-    
-    # Run the token refresh script to get initial token
-    /etc/postfix/gmail-api/refresh-token.sh
-    
-    # Create a cron job to refresh the token every 30 minutes
-    echo "*/30 * * * * root /etc/postfix/gmail-api/refresh-token.sh > /dev/null 2>&1" > /etc/cron.d/gmail-api-token
-    chmod 644 /etc/cron.d/gmail-api-token
-    
-    # Update main.cf configuration
-    cat > /etc/postfix/main.cf << EOF
+	chmod 700 /etc/postfix/gmail-api/refresh-token.sh
+
+	# Run the token refresh script to get initial token
+	/etc/postfix/gmail-api/refresh-token.sh
+
+	# Create a cron job to refresh the token every 30 minutes
+	echo "*/30 * * * * root /etc/postfix/gmail-api/refresh-token.sh > /dev/null 2>&1" >/etc/cron.d/gmail-api-token
+	chmod 644 /etc/cron.d/gmail-api-token
+
+	# Update main.cf configuration
+	cat >/etc/postfix/main.cf <<EOF
 # Basic Postfix configuration
 smtpd_banner = \$myhostname ESMTP \$mail_name
 biff = no
@@ -243,27 +243,27 @@ recipient_delimiter = +
 inet_interfaces = loopback-only
 inet_protocols = all
 EOF
-    
-    # Restart Postfix
-    systemctl restart postfix
-    
-    log "SUCCESS" "Postfix configured to use Gmail API"
+
+	# Restart Postfix
+	systemctl restart postfix
+
+	log "SUCCESS" "Postfix configured to use Gmail API"
 }
 
 # Function to configure WordPress
 configure_wordpress() {
-    log "INFO" "Configuring WordPress to use Google API..."
-    
-    # Check if wp-config.php exists
-    if [ ! -f "${WP_PATH}/wp-config.php" ]; then
-        log "ERROR" "WordPress configuration file not found at ${WP_PATH}/wp-config.php"
-        log "INFO" "Please check your WordPress installation path and try again"
-        exit 1
-    fi
-    
-    # Create the WordPress Gmail API plugin file
-    mkdir -p "${WP_PATH}/wp-content/mu-plugins"
-    cat > "${WP_PATH}/wp-content/mu-plugins/gmail-api.php" << EOF
+	log "INFO" "Configuring WordPress to use Google API..."
+
+	# Check if wp-config.php exists
+	if [[ ! -f "${WP_PATH}/wp-config.php" ]]; then
+		log "ERROR" "WordPress configuration file not found at ${WP_PATH}/wp-config.php"
+		log "INFO" "Please check your WordPress installation path and try again"
+		exit 1
+	fi
+
+	# Create the WordPress Gmail API plugin file
+	mkdir -p "${WP_PATH}/wp-content/mu-plugins"
+	cat >"${WP_PATH}/wp-content/mu-plugins/gmail-api.php" <<EOF
 <?php
 /**
  * Plugin Name: Gmail API Configuration
@@ -345,19 +345,19 @@ class Gmail_API_Mailer {
 // Initialize the mailer
 new Gmail_API_Mailer();
 EOF
-    
-    # Set proper permissions
-    chown -R www-data:www-data "${WP_PATH}/wp-content/mu-plugins"
-    chmod 644 "${WP_PATH}/wp-content/mu-plugins/gmail-api.php"
-    
-    log "SUCCESS" "WordPress configured to use Gmail API"
+
+	# Set proper permissions
+	chown -R www-data:www-data "${WP_PATH}/wp-content/mu-plugins"
+	chmod 644 "${WP_PATH}/wp-content/mu-plugins/gmail-api.php"
+
+	log "SUCCESS" "WordPress configured to use Gmail API"
 }
 
 # Function to create a helper script for obtaining Google API credentials
 create_credentials_helper() {
-    log "INFO" "Creating helper script for obtaining Google API credentials..."
-    
-    cat > get-gmail-credentials.sh << 'EOF'
+	log "INFO" "Creating helper script for obtaining Google API credentials..."
+
+	cat >get-gmail-credentials.sh <<'EOF'
 #!/bin/bash
 
 # Helper script to obtain Google API credentials for WordPress Gmail CLI
@@ -455,20 +455,20 @@ echo
 echo -e "${BOLD}Use these credentials with the WordPress Gmail CLI:${RESET}"
 echo -e "${YELLOW}./wordpress-gmail-cli.sh --email ${EMAIL} --client-id ${CLIENT_ID} --client-secret ${CLIENT_SECRET} --refresh-token ${REFRESH_TOKEN} --domain your-domain.com${RESET}"
 EOF
-    
-    chmod +x get-gmail-credentials.sh
-    
-    log "SUCCESS" "Helper script created: get-gmail-credentials.sh"
-    log "INFO" "Run this script to obtain the necessary Google API credentials"
+
+	chmod +x get-gmail-credentials.sh
+
+	log "SUCCESS" "Helper script created: get-gmail-credentials.sh"
+	log "INFO" "Run this script to obtain the necessary Google API credentials"
 }
 
 # Function to test email configuration
 test_email() {
-    log "INFO" "Testing email configuration..."
-    
-    # Create a temporary PHP file for testing
-    local test_file="/tmp/wp-mail-test.php"
-    cat > "$test_file" << EOF
+	log "INFO" "Testing email configuration..."
+
+	# Create a temporary PHP file for testing
+	local test_file="/tmp/wp-mail-test.php"
+	cat >"${test_file}" <<EOF
 <?php
 // Load WordPress
 require_once('${WP_PATH}/wp-load.php');
@@ -482,40 +482,40 @@ require_once('${WP_PATH}/wp-load.php');
 \$result = wp_mail(\$to, \$subject, \$message, \$headers);
 echo \$result ? "Test email sent successfully!" : "Failed to send test email.";
 EOF
-    
-    # Run the test
-    php "$test_file"
-    rm "$test_file"
-    
-    log "INFO" "Check your inbox for a test email"
-    log "INFO" "If you don't receive it, check your spam folder"
+
+	# Run the test
+	php "${test_file}"
+	rm "${test_file}"
+
+	log "INFO" "Check your inbox for a test email"
+	log "INFO" "If you don't receive it, check your spam folder"
 }
 
 # Function to configure social authentication
 configure_social_auth() {
-    log "INFO" "Configuring social authentication for WordPress..."
-    
-    # Use email client credentials if specific auth credentials not provided
-    GOOGLE_AUTH_ID=${GOOGLE_AUTH_ID:-$CLIENT_ID}
-    GOOGLE_AUTH_SECRET=${GOOGLE_AUTH_SECRET:-$CLIENT_SECRET}
-    
-    # Check if wp-config.php exists
-    if [ ! -f "${WP_PATH}/wp-config.php" ]; then
-        log "ERROR" "WordPress configuration file not found at ${WP_PATH}/wp-config.php"
-        log "INFO" "Please check your WordPress installation path and try again"
-        return 1
-    fi
-    
-    # Copy the social auth plugin to WordPress
-    mkdir -p "${WP_PATH}/wp-content/mu-plugins"
-    cp "$(dirname "$0")/wp-social-auth.php" "${WP_PATH}/wp-content/mu-plugins/"
-    
-    # If wp-social-auth.php doesn't exist in the current directory, create it
-    if [ ! -f "$(dirname "$0")/wp-social-auth.php" ]; then
-        log "INFO" "Creating social authentication plugin..."
-        
-        # Create the WordPress social authentication plugin file
-        cat > "${WP_PATH}/wp-content/mu-plugins/wp-social-auth.php" << 'EOF'
+	log "INFO" "Configuring social authentication for WordPress..."
+
+	# Use email client credentials if specific auth credentials not provided
+	GOOGLE_AUTH_ID=${GOOGLE_AUTH_ID:-${CLIENT_ID}}
+	GOOGLE_AUTH_SECRET=${GOOGLE_AUTH_SECRET:-${CLIENT_SECRET}}
+
+	# Check if wp-config.php exists
+	if [[ ! -f "${WP_PATH}/wp-config.php" ]]; then
+		log "ERROR" "WordPress configuration file not found at ${WP_PATH}/wp-config.php"
+		log "INFO" "Please check your WordPress installation path and try again"
+		return 1
+	fi
+
+	# Copy the social auth plugin to WordPress
+	mkdir -p "${WP_PATH}/wp-content/mu-plugins"
+	cp "$(dirname "$0")/wp-social-auth.php" "${WP_PATH}/wp-content/mu-plugins/"
+
+	# If wp-social-auth.php doesn't exist in the current directory, create it
+	if [[ ! -f "$(dirname "$0")/wp-social-auth.php" ]]; then
+		log "INFO" "Creating social authentication plugin..."
+
+		# Create the WordPress social authentication plugin file
+		cat >"${WP_PATH}/wp-content/mu-plugins/wp-social-auth.php" <<'EOF'
 <?php
 /**
  * Plugin Name: WordPress Social Authentication
@@ -896,16 +896,16 @@ function wp_social_auth_init($config = []) {
 // Hook to initialize the plugin
 add_action('init', 'wp_social_auth_init');
 EOF
-    else
-        cp "$(dirname "$0")/wp-social-auth.php" "${WP_PATH}/wp-content/mu-plugins/"
-    fi
-    
-    # Set proper permissions
-    chown -R www-data:www-data "${WP_PATH}/wp-content/mu-plugins"
-    chmod 644 "${WP_PATH}/wp-content/mu-plugins/wp-social-auth.php"
-    
-    # Configure the plugin with the provided credentials
-    cat > "${WP_PATH}/wp-content/mu-plugins/social-auth-config.php" << EOF
+	else
+		cp "$(dirname "$0")/wp-social-auth.php" "${WP_PATH}/wp-content/mu-plugins/"
+	fi
+
+	# Set proper permissions
+	chown -R www-data:www-data "${WP_PATH}/wp-content/mu-plugins"
+	chmod 644 "${WP_PATH}/wp-content/mu-plugins/wp-social-auth.php"
+
+	# Configure the plugin with the provided credentials
+	cat >"${WP_PATH}/wp-content/mu-plugins/social-auth-config.php" <<EOF
 <?php
 /**
  * Plugin Name: Social Authentication Configuration
@@ -931,81 +931,81 @@ add_action('init', function() {
     }
 });
 EOF
-    
-    # Set proper permissions
-    chmod 644 "${WP_PATH}/wp-content/mu-plugins/social-auth-config.php"
-    
-    log "SUCCESS" "Social authentication configured for WordPress"
-    log "INFO" "Google and Facebook login buttons will appear on the WordPress login page"
-    
-    return 0
+
+	# Set proper permissions
+	chmod 644 "${WP_PATH}/wp-content/mu-plugins/social-auth-config.php"
+
+	log "SUCCESS" "Social authentication configured for WordPress"
+	log "INFO" "Google and Facebook login buttons will appear on the WordPress login page"
+
+	return 0
 }
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
-    key="$1"
-    case $key in
-        -e|--email)
-            EMAIL="$2"
-            shift 2
-            ;;
-        -c|--client-id)
-            CLIENT_ID="$2"
-            shift 2
-            ;;
-        -s|--client-secret)
-            CLIENT_SECRET="$2"
-            shift 2
-            ;;
-        -r|--refresh-token)
-            REFRESH_TOKEN="$2"
-            shift 2
-            ;;
-        -d|--domain)
-            DOMAIN="$2"
-            shift 2
-            ;;
-        -w|--wp-path)
-            WP_PATH="$2"
-            shift 2
-            ;;
-        -a|--social-auth)
-            ENABLE_SOCIAL_AUTH=true
-            shift
-            ;;
-        --google-auth-id)
-            GOOGLE_AUTH_ID="$2"
-            shift 2
-            ;;
-        --google-auth-secret)
-            GOOGLE_AUTH_SECRET="$2"
-            shift 2
-            ;;
-        --facebook-app-id)
-            FACEBOOK_APP_ID="$2"
-            shift 2
-            ;;
-        --facebook-app-secret)
-            FACEBOOK_APP_SECRET="$2"
-            shift 2
-            ;;
-        -h|--help)
-            usage
-            ;;
-        *)
-            log "ERROR" "Unknown option: $1"
-            usage
-            ;;
-    esac
+	key="$1"
+	case ${key} in
+	-e | --email)
+		EMAIL="$2"
+		shift 2
+		;;
+	-c | --client-id)
+		CLIENT_ID="$2"
+		shift 2
+		;;
+	-s | --client-secret)
+		CLIENT_SECRET="$2"
+		shift 2
+		;;
+	-r | --refresh-token)
+		REFRESH_TOKEN="$2"
+		shift 2
+		;;
+	-d | --domain)
+		DOMAIN="$2"
+		shift 2
+		;;
+	-w | --wp-path)
+		WP_PATH="$2"
+		shift 2
+		;;
+	-a | --social-auth)
+		ENABLE_SOCIAL_AUTH=true
+		shift
+		;;
+	--google-auth-id)
+		GOOGLE_AUTH_ID="$2"
+		shift 2
+		;;
+	--google-auth-secret)
+		GOOGLE_AUTH_SECRET="$2"
+		shift 2
+		;;
+	--facebook-app-id)
+		FACEBOOK_APP_ID="$2"
+		shift 2
+		;;
+	--facebook-app-secret)
+		FACEBOOK_APP_SECRET="$2"
+		shift 2
+		;;
+	-h | --help)
+		usage
+		;;
+	*)
+		log "ERROR" "Unknown option: $1"
+		usage
+		;;
+	esac
 done
 
 # Set default WordPress path if not provided
 WP_PATH=${WP_PATH:-/var/www/html}
 
 # Validate required parameters
-if [ -z "$EMAIL" ] || [ -z "$CLIENT_ID" ] || [ -z "$CLIENT_SECRET" ] || [ -z "$REFRESH_TOKEN" ] || [ -z "$DOMAIN" ]; then
-    log "ERROR" "Missing required parameters"
-    usage
+if [[ -z ${EMAIL} ]] || [[ -z ${CLIENT_ID} ]] || [[ -z ${CLIENT_SECRET} ]] || [[ -z ${REFRESH_TOKEN} ]] || [[ -z ${DOMAIN} ]]; then
+	log "ERROR" "Missing required parameters"
+	usage
 fi
 
 # Main execution
@@ -1017,24 +1017,24 @@ configure_wordpress
 create_credentials_helper
 
 # Configure social authentication if enabled
-if [ "$ENABLE_SOCIAL_AUTH" = true ]; then
-    configure_social_auth
+if [[ ${ENABLE_SOCIAL_AUTH} == true ]]; then
+	configure_social_auth
 fi
 
 log "SUCCESS" "Configuration completed successfully!"
 log "INFO" "Would you like to send a test email? (y/n)"
 read -r response
-if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-    test_email
+if [[ ${response} =~ ^([yY][eE][sS]|[yY])$ ]]; then
+	test_email
 fi
 
 log "SUCCESS" "Your WordPress site is now configured to send emails through Gmail API"
-if [ "$ENABLE_SOCIAL_AUTH" = true ]; then
-    log "SUCCESS" "Social authentication (Google and Facebook login) is also configured"
+if [[ ${ENABLE_SOCIAL_AUTH} == true ]]; then
+	log "SUCCESS" "Social authentication (Google and Facebook login) is also configured"
 fi
 
 # Create a conventional commit message
-cat > commit-message.txt << EOF
+cat >commit-message.txt <<EOF
 feat: add Google API authentication and social login
 
 - Replace basic SMTP with OAuth2 using Google API

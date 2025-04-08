@@ -17,21 +17,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Extract version from tag
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-          
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -40,7 +40,7 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/wordpress-gmail-cli:latest
             ghcr.io/${{ github.repository_owner }}/wordpress-gmail-cli:${{ steps.version.outputs.version }}
-          
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
