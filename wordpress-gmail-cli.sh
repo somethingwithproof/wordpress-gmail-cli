@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # wordpress-gmail-cli
+# Version: 1.1.0
 # A CLI tool to configure WordPress and Postfix for sending outbound emails using Google API
 # Especially useful for Digital Ocean servers where standard SMTP ports are blocked
 
