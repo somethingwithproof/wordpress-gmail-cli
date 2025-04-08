@@ -62,26 +62,26 @@ echo "Copy the entire URL from your browser and paste it here:"
 read REDIRECT_URL
 
 # Extract the authorization code from the redirect URL
-CODE=$(echo "$REDIRECT_URL" | grep -oP 'code=\K[^&]+')
+CODE=$(echo "${REDIRECT_URL}" | grep -oP 'code=\K[^&]+')
 
-if [ -z "$CODE" ]; then
-    echo -e "${RED}Failed to extract authorization code from the URL${RESET}"
-    exit 1
+if [[ -z ${CODE} ]]; then
+	echo -e "${RED}Failed to extract authorization code from the URL${RESET}"
+	exit 1
 fi
 
 # Exchange the authorization code for tokens
 TOKEN_RESPONSE=$(curl -s --request POST \
-    --url "https://oauth2.googleapis.com/token" \
-    --header "Content-Type: application/x-www-form-urlencoded" \
-    --data "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&code=${CODE}&redirect_uri=http://localhost:8080&grant_type=authorization_code")
+	--url "https://oauth2.googleapis.com/token" \
+	--header "Content-Type: application/x-www-form-urlencoded" \
+	--data "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&code=${CODE}&redirect_uri=http://localhost:8080&grant_type=authorization_code")
 
 # Extract the refresh token
-REFRESH_TOKEN=$(echo "$TOKEN_RESPONSE" | grep -oP '"refresh_token":"\K[^"]+')
+REFRESH_TOKEN=$(echo "${TOKEN_RESPONSE}" | grep -oP '"refresh_token":"\K[^"]+')
 
-if [ -z "$REFRESH_TOKEN" ]; then
-    echo -e "${RED}Failed to obtain refresh token${RESET}"
-    echo "Response: $TOKEN_RESPONSE"
-    exit 1
+if [[ -z ${REFRESH_TOKEN} ]]; then
+	echo -e "${RED}Failed to obtain refresh token${RESET}"
+	echo "Response: ${TOKEN_RESPONSE}"
+	exit 1
 fi
 
 echo -e "\n${GREEN}Successfully obtained credentials!${RESET}"
