@@ -97,9 +97,9 @@ jobs:
         run: chmod +x bin/*.sh
         
       - name: Test version script
-        run: bin/version.sh --version || true
+        run: bin/version.sh --help || true
         continue-on-error: true
         
       - name: Test enhance-ssl-security script
-        run: bin/enhance-ssl-security.sh --version || true
+        run: bin/enhance-ssl-security.sh --help || true
         continue-on-error: true
