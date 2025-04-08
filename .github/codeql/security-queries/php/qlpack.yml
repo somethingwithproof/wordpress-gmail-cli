@@ -1,0 +1,6 @@
+name: wordpress-gmail-cli/php-security-queries
+version: 0.0.1
+dependencies:
+  codeql/php-all: "*"
+suites: .
+defaultSuiteFile: security-queries.qls
