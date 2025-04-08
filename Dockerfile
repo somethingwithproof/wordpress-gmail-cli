@@ -24,7 +24,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy scripts
-COPY *.sh /app/
+COPY bin/*.sh /app/
 COPY wp-social-auth.php /app/
 
 # Make scripts executable
