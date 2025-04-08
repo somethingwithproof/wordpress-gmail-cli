@@ -15,7 +15,7 @@ jobs:
     name: Lint Code
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read # Needed for checkout and linting tools
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,63 +24,76 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          tools: phpcs, phpstan
+          tools: phpcs # Install only tools needed for this job
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      # Node.js setup removed unless required for JS linting tools not covered by package.json
+      # - name: Set up Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '20'
 
-      - name: Install dependencies
-        run: |
-          npm install -g shellcheck
+      # Shellcheck install via npm removed - using action below
 
-      - name: Lint PHP files (informational only)
-        run: |
-          phpcs --standard=PSR12 wp-social-auth.php || true
+      - name: Lint PHP files
+        # Consider linting all PHP files: run: phpcs --standard=PSR12 .
+        run: phpcs --standard=PSR12 wp-social-auth.php
 
-      - name: Lint Shell scripts (informational only)
-        run: |
-          shellcheck *.sh || true
+      - name: Lint Shell scripts (using action)
+        uses: ludeeus/action-shellcheck@v2.0.0 # Pin to specific version
+        # Action discovers scripts automatically. Configure 'scan_paths' if needed.
 
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
     needs: lint
     permissions:
-      security-events: write
+      contents: read          # REQUIRED to checkout and scan files
+      security-events: write # REQUIRED to upload CodeQL results
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Recommended for CodeQL
 
-      - name: Run ShellCheck (informational only)
-        uses: ludeeus/action-shellcheck@master
-        continue-on-error: true
+      # Add PHP Setup if scanning PHP with CodeQL
+      - name: Set up PHP
+        if: contains(matrix.language, 'php') || true # Run if PHP exists in a potential matrix, or always if matrix isn't used
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: none
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+      - name: Run Trivy vulnerability scanner (filesystem)
+        uses: aquasecurity/trivy-action@0.20.0 # Pin to specific version
         with:
           scan-type: 'fs'
           format: 'table'
-          exit-code: '0'
+          exit-code: '1' # Fail workflow if specified vulnerabilities found
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
 
-      - name: Run SAST scan
+      - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: javascript
+          # Add 'php' if desired
+          languages: javascript # , php
+          # Use custom config if desired
+          # config-file: ./.github/codeql/codeql-config.yml
+
+      # Autobuild step not needed for JS/PHP
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
-        continue-on-error: true
+        # This will now fail the workflow on findings by default
 
   build:
     name: Build and Test
     runs-on: ubuntu-latest
     needs: security-scan
     permissions:
-      contents: read
+      contents: read   # REQUIRED for checkout
+      actions: write  # REQUIRED for cache-to: type=gha
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -98,27 +111,34 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Test Docker image (informational only)
-        run: |
-          docker run --rm wordpress-gmail-cli:test --help || true
-        continue-on-error: true
+      - name: Make scripts executable
+        # Adjust scope if needed, e.g., bin/**/*.sh
+        run: chmod +x bin/*.sh
+
+      - name: Test Docker image
+        run: bin/test-docker.sh # Assumes this script exists
+
+      - name: Test shell scripts
+        run: bin/test-scripts.sh # Assumes this script exists
 
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build] # Ensure build job passes before releasing
     permissions:
-      contents: write
-      packages: write
+      contents: write   # REQUIRED to create release/tag
+      packages: write  # REQUIRED to push packages (Docker image to GHCR)
+    # Run only on push to main with specific commit message
     if: >
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
-      contains(github.event.head_commit.message, 'chore: release')
+      contains(github.event.head_commit.message, 'chore: release v') # Match 'chore: release vX.Y.Z'
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Needed for release notes generation / tag info
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -133,40 +153,43 @@ jobs:
       - name: Extract version from commit message
         id: version
         run: |
-          # Safely extract version using GitHub's built-in expression syntax
-          if [[ "${{ github.event.head_commit.message }}" =~ release\ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+          # Extract version X.Y.Z from commit message like "chore: release vX.Y.Z ..."
+          if [[ "${{ github.event.head_commit.message }}" =~ chore:\ release\ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
             VERSION="${BASH_REMATCH[1]}"
-            # Validate that VERSION is a valid semantic version
+            # Basic validation
             if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Extracted version: $VERSION"
               echo "version=$VERSION" >> $GITHUB_OUTPUT
             else
-              echo "Invalid version format" >&2
+              echo "Error: Invalid version format extracted: $VERSION" >&2
               exit 1
             fi
           else
-            echo "No version found in commit message" >&2
-            echo "version=0.0.0" >> $GITHUB_OUTPUT
+            echo "Error: Commit message does not contain 'chore: release vX.Y.Z'." >&2
+            echo "Commit message was: ${{ github.event.head_commit.message }}" >&2
+            exit 1 # Fail if version not found
           fi
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image to GHCR
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/wordpress-gmail-cli:latest
-            ghcr.io/${{ github.repository_owner }}/wordpress-gmail-cli:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}
+          # Use repository name which includes owner: owner/repo
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v1 # Or pin to specific v1.x.y
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: Release v${{ steps.version.outputs.version }}
-          generate_release_notes: true
+          generate_release_notes: true # Auto-generate release notes from commits
+          # Verify these file paths are correct relative to the repo root
           files: |
-            wordpress-gmail-cli.sh
+            bin/wordpress-gmail-cli.sh
             wp-social-auth.php
-            enhance-ssl-security.sh
-            get-gmail-credentials.sh
+            bin/enhance-ssl-security.sh

@@ -15,26 +15,28 @@ jobs:
     name: Lint Shell Scripts
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read        # To checkout and read files
+      pull-requests: write # OPTIONAL: To allow shfmt action to comment on PRs
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      - name: Run ShellCheck (informational only)
-        uses: ludeeus/action-shellcheck@master
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@v2.0.0 # PINNED VERSION
         with:
+          # Consider 'warning' or 'error' if 'style' is too noisy
           severity: style
-        continue-on-error: true
-          
-      - name: Run shfmt (informational only)
+
+      - name: Run shfmt for formatting check
         uses: luizm/action-sh-checker@v0.5.0
         env:
-          SHFMT_OPTS: -i 2 -ci -bn
+          SHFMT_OPTS: -i 2 -ci -bn # Indent 2, simplify case, binary ops follow
         with:
+          # Set to false if PR comments are not needed or permission is not granted
           sh_checker_comment: true
-          sh_checker_exclude: vendor
-        continue-on-error: true
-          
+          sh_checker_exclude: vendor # Exclude vendor directory
+
   lint-php:
     name: Lint PHP Files
     runs-on: ubuntu-latest
@@ -43,63 +45,27 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           tools: phpcs, phpstan, php-cs-fixer
-          
-      - name: Run PHP_CodeSniffer (informational only)
-        run: phpcs --standard=PSR12 wp-social-auth.php || true
-        
-      - name: Run PHPStan (informational only)
-        run: phpstan analyse wp-social-auth.php --level=5 || true
-        
-      - name: Run PHP-CS-Fixer (informational only)
-        run: php-cs-fixer fix wp-social-auth.php --dry-run --diff || true
-        
+
+      - name: Run PHP_CodeSniffer
+        # Adjust paths to your PHP source directories (e.g., src/ .)
+        run: phpcs --standard=PSR12 src/ includes/ wp-social-auth.php
+
+      - name: Run PHPStan
+        # Adjust paths to your PHP source directories (e.g., src/ .)
+        run: phpstan analyse src/ includes/ wp-social-auth.php --level=5
+
+      - name: Run PHP-CS-Fixer (Dry Run)
+        # Adjust paths to your PHP source directories (e.g., src/ .)
+        run: php-cs-fixer fix src/ includes/ wp-social-auth.php --dry-run --diff
+
+  # OPTIONAL: Add 'needs' if you want linting to finish before testing starts
+  # needs: [lint-shell, lint-php]
   test-docker:
     name: Test Docker Build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
-          load: true
-          tags: wordpress-gmail-cli:test
-          
-      - name: Test Docker image
-        run: |
-          docker run --rm wordpress-gmail-cli:test --help || true
-        continue-on-error: true
-          
-  test-scripts:
-    name: Test Scripts
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Make scripts executable
-        run: chmod +x bin/*.sh
-        
-      - name: Test version script
-        run: bin/version.sh --help || true
-        continue-on-error: true
-        
-      - name: Test enhance-ssl-security script
-        run: bin/enhance-ssl-security.sh --help || true
-        continue-on-error: true
+    runs-on: ubuntu
