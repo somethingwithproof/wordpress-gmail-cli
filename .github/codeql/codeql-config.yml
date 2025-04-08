@@ -1,33 +1,88 @@
 name: "Custom CodeQL Configuration"
 
-# Disable the default setup to avoid conflicts
+# Disable default queries to use our custom ones
 disable-default-queries: true
 
-# Use the security and quality query suite
+# Define query suites to run
 queries:
+  # Run all security and quality queries
   - uses: security-and-quality
+  # Add security-extended queries for more comprehensive analysis
+  - uses: security-extended
+  # Add custom queries for PHP-specific security issues
+  - name: PHP Security Queries
+    uses: ./security-queries/php
+  # Add custom queries for JavaScript-specific security issues
+  - name: JavaScript Security Queries
+    uses: ./security-queries/javascript
 
 # Define paths to exclude from analysis
 paths-ignore:
+  # Dependency directories
   - '**/node_modules/**'
   - '**/vendor/**'
+  # Test files
   - '**/*.test.js'
   - '**/*.spec.js'
+  - '**/*Test.php'
+  # Minified files
   - '**/*.min.js'
+  - '**/*.min.css'
+  # Documentation
+  - '**/*.md'
+  - '**/*.txt'
+  - '**/docs/**'
 
 # Define paths to include in analysis
 paths:
+  # Shell scripts
   - bin
+  # PHP files
   - wp-social-auth.php
+  # JavaScript files
+  - '**/*.js'
+  # Configuration files
+  - '**/*.json'
+  - '**/*.yml'
+  - '**/*.yaml'
 
-# Language configuration
+# Language-specific configuration
 languages:
+  # JavaScript configuration
   - name: javascript
+    # Specify patterns for test files
+    test-patterns:
+      - '**/*.test.js'
+      - '**/*.spec.js'
+    # Configure extraction
+    extraction:
+      # Specify JavaScript version
+      javascript:
+        ecmascript: es2020
+
+  # PHP configuration
   - name: php
+    # Specify patterns for test files
     test-patterns:
       - '**/*Test.php'
+    # Configure indexing
     index:
       include:
         - '**/*.php'
       exclude:
         - '**/vendor/**'
+        - '**/tests/**'
+    # Configure extraction
+    extraction:
+      # Specify PHP version
+      php:
+        version: '8.2'
+        # Include standard PHP libraries
+        standard_library: true
+
+# Database configuration
+database:
+  # Optimize database for better performance
+  optimize: true
+  # Set maximum database size
+  max-disk-space: 1024

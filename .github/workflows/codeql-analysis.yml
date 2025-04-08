@@ -3,27 +3,29 @@ name: "CodeQL Analysis"
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
   schedule:
     - cron: '0 0 * * 1'  # Run every Monday at midnight
   workflow_dispatch:
 
-# Explicitly disable the default setup
-# This is required to avoid conflicts with custom configurations
+# Define permissions at the top level
 permissions:
-  security-events: write
   actions: read
   contents: read
+  security-events: write
 
 jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
+    timeout-minutes: 60  # Prevent workflow from running too long
 
     strategy:
       fail-fast: false
@@ -33,6 +35,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Full git history is needed to get a proper list of changed files
+          fetch-depth: 0
 
       # Set up PHP for better language detection
       - name: Setup PHP
@@ -42,19 +47,32 @@ jobs:
           php-version: '8.2'
           coverage: none
           tools: none
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, json
 
+      # Initializes the CodeQL tools for scanning
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-          queries: security-and-quality
-          # Disable the default CodeQL setup to avoid conflicts
+          # Use the latest version of CodeQL
+          tools: latest
+          # Run additional security queries
+          queries: +security-extended,security-and-quality
+          # Use our custom configuration
           config-file: ./.github/codeql/codeql-config.yml
+          # Enable scanning of dependencies for vulnerabilities
+          setup-python-dependencies: true
 
+      # Autobuild attempts to build any compiled languages
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
 
+      # Perform CodeQL Analysis
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
+          # Upload results to GitHub Advanced Security
+          upload: true
+          # Add a summary of the results
+          output: sarif-results
