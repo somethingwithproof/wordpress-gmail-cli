@@ -22,6 +22,8 @@ log() {
 	"SUCCESS") color=${GREEN} ;;
 	"WARNING") color=${YELLOW} ;;
 	"ERROR") color=${RED} ;;
+	*) color=${RESET}
+	   echo "Unknown log level: ${level}" >&2 ;;
 	esac
 
 	echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${color}${level}${RESET}: ${message}"
@@ -30,6 +32,7 @@ log() {
 # Function to check if command exists
 command_exists() {
 	command -v "$1" >/dev/null 2>&1
+	return $?
 }
 
 # Function to check if running as root
@@ -266,7 +269,7 @@ EOF
 
 	# Modify token refresh script to log to a file
 	if [[ -f /etc/postfix/gmail-api/refresh-token.sh ]]; then
-		sed -i "s|echo \"Access token refreshed successfully (expires in \${EXPIRES_IN}s)\"|echo \"\$(date): Access token refreshed successfully (expires in \${EXPIRES_IN}s)\" >> /etc/postfix/gmail-api/token-refresh.log|g" /etc/postfix/gmail-api/refresh-token.sh
+		sed -i 's|echo "Access token refreshed successfully (expires in ${EXPIRES_IN}s)"|echo "$(date): Access token refreshed successfully (expires in ${EXPIRES_IN}s)" >> /etc/postfix/gmail-api/token-refresh.log|g' /etc/postfix/gmail-api/refresh-token.sh
 	else
 		log "WARNING" "Token refresh script not found. Logging configuration may be incomplete."
 	fi
