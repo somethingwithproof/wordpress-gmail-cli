@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-04-07
+
+### Added
+- SSL security enhancement script to fix issues reported by WP-Encryption plugin
+- Automatic configuration of secure headers and TLS settings
+- HTTP to HTTPS redirect implementation
+- SSL certificate auto-renewal setup
+- Support for both Apache and Nginx web servers
+- WP Encryption plugin installation and configuration
+
+### Security
+- HSTS (HTTP Strict Transport Security) implementation
+- Secure cookie configuration
+- Modern TLS protocols and cipher suites
+- Content Security Policy headers
+- X-Content-Type-Options and other security headers
+- OCSP Stapling for improved certificate validation
+
 ## [1.0.0] - 2025-04-07
 
 ### Added
