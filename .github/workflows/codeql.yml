@@ -1,14 +1,14 @@
 # This workflow uses the CodeQL Advanced setup for more control.
-name: "CodeQL Advanced"
+name: CodeQL Advanced
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
     paths-ignore: # Optional: Ignore paths for push/pr triggers
       - '**/*.md'
       - '**/*.txt'
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
     paths-ignore: # Optional: Ignore paths for push/pr triggers
       - '**/*.md'
       - '**/*.txt'
@@ -78,10 +78,7 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }} # Use build-mode from matrix
-        # Use the custom config file if desired (ensure it exists)
         config-file: ./.github/codeql/codeql-config.yml
-        # Or specify queries directly (add '+' to combine with config file)
-        # queries: +security-extended,security-and-quality
 
     # The manual build step block is kept from the template.
     # It will only run if you explicitly set build-mode: manual for a language.
