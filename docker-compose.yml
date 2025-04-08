@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:latest
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./wp-social-auth.php:/var/www/html/wp-content/mu-plugins/wp-social-auth.php
+    depends_on:
+      - db
+
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+    volumes:
+      - db_data:/var/lib/mysql
+
+  cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./:/app
+    environment:
+      - WP_PATH=/var/www/html
+    depends_on:
+      - wordpress
+      - db
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: wordpress
+    depends_on:
+      - db
+
+volumes:
+  wordpress_data:
+  db_data:

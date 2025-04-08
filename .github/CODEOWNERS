@@ -1,0 +1,24 @@
+# This file defines the code owners for the repository
+# Each line is a file pattern followed by one or more owners
+
+# Default owners for everything in the repo
+* @thomasvincent
+
+# Specific ownership for critical files
+*.sh @thomasvincent
+*.php @thomasvincent
+
+# Workflow files
+/.github/workflows/ @thomasvincent
+
+# Security-related files
+/SECURITY.md @thomasvincent
+/enhance-ssl-security.sh @thomasvincent
+
+# Docker-related files
+/Dockerfile @thomasvincent
+/docker-compose.yml @thomasvincent
+
+# Documentation
+/README.md @thomasvincent
+/CHANGELOG.md @thomasvincent
