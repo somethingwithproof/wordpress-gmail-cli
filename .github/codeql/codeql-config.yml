@@ -1,0 +1,21 @@
+name: "Custom CodeQL Configuration"
+
+# Disable the default setup to avoid conflicts
+disable-default-queries: true
+
+# Use the security and quality query suite
+queries:
+  - uses: security-and-quality
+
+# Define paths to exclude from analysis
+paths-ignore:
+  - '**/node_modules/**'
+  - '**/vendor/**'
+  - '**/*.test.js'
+  - '**/*.spec.js'
+  - '**/*.min.js'
+
+# Define paths to include in analysis
+paths:
+  - bin
+  - wp-social-auth.php
