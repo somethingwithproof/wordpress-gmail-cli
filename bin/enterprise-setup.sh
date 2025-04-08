@@ -73,11 +73,11 @@ configure_vault_integration() {
 		return 1
 	fi
 
-    # Prompt for Vault address
-    read -r -p "Enter Vault server address (e.g., https://vault.example.com:8200): " VAULT_ADDR
-    
-    # Prompt for Vault token
-    read -r -p "Enter Vault token: " VAULT_TOKEN
+	# Prompt for Vault address
+	read -r -p "Enter Vault server address (e.g., https://vault.example.com:8200): " VAULT_ADDR
+
+	# Prompt for Vault token
+	read -r -p "Enter Vault token: " VAULT_TOKEN
 
 	# Create credentials directory if it doesn't exist
 	mkdir -p /etc/postfix/gmail-api
@@ -266,7 +266,7 @@ EOF
 
 	# Modify token refresh script to log to a file
 	if [[ -f /etc/postfix/gmail-api/refresh-token.sh ]]; then
-		sed -i 's|echo "Access token refreshed successfully (expires in ${EXPIRES_IN}s)"|echo "$(date): Access token refreshed successfully (expires in ${EXPIRES_IN}s)" >> /etc/postfix/gmail-api/token-refresh.log|g' /etc/postfix/gmail-api/refresh-token.sh
+		sed -i "s|echo \"Access token refreshed successfully (expires in \${EXPIRES_IN}s)\"|echo \"\$(date): Access token refreshed successfully (expires in \${EXPIRES_IN}s)\" >> /etc/postfix/gmail-api/token-refresh.log|g" /etc/postfix/gmail-api/refresh-token.sh
 	else
 		log "WARNING" "Token refresh script not found. Logging configuration may be incomplete."
 	fi
