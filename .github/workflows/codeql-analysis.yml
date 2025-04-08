@@ -9,6 +9,13 @@ on:
     - cron: '0 0 * * 1'  # Run every Monday at midnight
   workflow_dispatch:
 
+# Explicitly disable the default setup
+# This is required to avoid conflicts with custom configurations
+permissions:
+  security-events: write
+  actions: read
+  contents: read
+
 jobs:
   analyze:
     name: Analyze
@@ -26,6 +33,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # Set up PHP for better language detection
+      - name: Setup PHP
+        if: matrix.language == 'php'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: none
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3

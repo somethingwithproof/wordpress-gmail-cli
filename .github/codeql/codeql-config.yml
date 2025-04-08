@@ -19,3 +19,15 @@ paths-ignore:
 paths:
   - bin
   - wp-social-auth.php
+
+# Language configuration
+languages:
+  - name: javascript
+  - name: php
+    test-patterns:
+      - '**/*Test.php'
+    index:
+      include:
+        - '**/*.php'
+      exclude:
+        - '**/vendor/**'
