@@ -31,13 +31,13 @@ echo
 
 echo -e "${BOLD}Step 3: Get a refresh token${RESET}"
 echo "Enter your Client ID:"
-read CLIENT_ID
+read -r CLIENT_ID
 
 echo "Enter your Client Secret:"
-read CLIENT_SECRET
+read -r CLIENT_SECRET
 
 echo "Enter your Gmail address:"
-read EMAIL
+read -r EMAIL
 
 # Generate a random state value
 STATE=$(openssl rand -hex 12)
@@ -59,7 +59,7 @@ echo
 
 echo "After you authorize the application, you will be redirected to localhost:8080 with a code parameter."
 echo "Copy the entire URL from your browser and paste it here:"
-read REDIRECT_URL
+read -r REDIRECT_URL
 
 # Extract the authorization code from the redirect URL
 CODE=$(echo "${REDIRECT_URL}" | grep -oP 'code=\K[^&]+')
