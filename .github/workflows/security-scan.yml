@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ main ]
   schedule:
-    - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight
+    - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight UTC
   workflow_dispatch:
 
 # Default permissions are read-only
@@ -21,74 +21,114 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      - name: Run ShellCheck (informational only)
-        uses: ludeeus/action-shellcheck@master
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@v2.0.0 # PINNED VERSION
         with:
+          # Only report actual errors (exit code != 0 from shellcheck)
           severity: error
-        continue-on-error: true
-          
+        # Remove continue-on-error if you want the job to FAIL on errors
+        # continue-on-error: true
+
   trivy-scan:
-    name: Trivy Vulnerability Scan
+    name: Trivy Vulnerability Scan (Container)
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      security-events: write
+      contents: read          # To checkout code and build image
+      security-events: write # To upload SARIF results
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      - name: Build Docker image
+
+      # REQUIRED step before building
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image for scanning
+        # No need to push, just load locally for Trivy
         uses: docker/build-push-action@v5
         with:
           context: .
           push: false
           load: true
-          tags: wordpress-gmail-cli:test
-          
+          tags: wordpress-gmail-cli:scan # Use a distinct tag for clarity
+
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.20.0 # PINNED VERSION
         with:
-          image-ref: 'wordpress-gmail-cli:test'
-          format: 'table'
-          exit-code: '0'  # Don't fail on vulnerabilities for now
+          image-ref: 'wordpress-gmail-cli:scan'
+          # Output as SARIF for upload
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          # Fail if CRITICAL or HIGH severity vulnerabilities are found
+          exit-code: '1'
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
-          
+
+      # Upload results to GitHub Security tab
+      - name: Upload Trivy scan results
+        if: github.event_name != 'pull_request' # Optional: Upload only on main/schedule?
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
   codeql-analysis:
-    name: CodeQL Analysis
+    name: CodeQL Analysis (SAST)
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
+      contents: read          # REQUIRED for checkout
+      security-events: write # REQUIRED for uploading results
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+        with:
+          fetch-depth: 0 # Recommended for CodeQL
+
+      # Add PHP Setup if scanning PHP
+      # - name: Setup PHP
+      #   if: contains(...) # Logic depends on how languages are specified
+      #   uses: shivammathur/setup-php@v2
+      #   with:
+      #     php-version: '8.2'
+      #     coverage: none
+      #     tools: none
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
+          # Add 'php' if desired, ensure Setup PHP step is included above
           languages: 'javascript'
-          
+          # config-file: ./.github/codeql/codeql-config.yml # Optional
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
-        continue-on-error: true
-        
+        # Remove continue-on-error to fail job on findings (Error, High, Medium default)
+        # continue-on-error: true
+
   secret-scan:
-    name: Secret Scanning
+    name: Secret Scanning (TruffleHog)
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      security-events: write
+      contents: read          # REQUIRED for checkout
+      # Check TruffleHog action docs if it utilizes security-events: write for SARIF upload
+      security-events: write # Potentially needed
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          # Fetch full history for better comparison/scanning
           fetch-depth: 0
-          
-      - name: TruffleHog OSS
-        uses: trufflesecurity/trufflehog@v3.28.0
+
+      - name: Run TruffleHog OSS Scan
+        uses: trufflesecurity/trufflehog@v3.28.0 # Version pinned
         with:
-          path: ./
+          path: ./ # Scan the entire repo
+          # Compare current HEAD against the default branch (e.g., main)
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
+          # Only report verified secrets, enable debug logging
           extra_args: --debug --only-verified
+        # Action will typically fail if verified secrets are found
