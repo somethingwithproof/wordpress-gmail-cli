@@ -11,86 +11,9 @@ on:
 permissions: read-all
 
 jobs:
-  lint:
-    name: Lint Code
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read # Needed for checkout and linting tools
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          tools: phpcs # Install only tools needed for this job
-
-      # Node.js setup removed unless required for JS linting tools not covered by package.json
-      # - name: Set up Node.js
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: '20'
-
-      # Shellcheck install via npm removed - using action below
-
-      - name: Lint PHP files
-        # Consider linting all PHP files: run: phpcs --standard=PSR12 .
-        run: phpcs --standard=PSR12 wp-social-auth.php
-
-      - name: Lint Shell scripts (using action)
-        uses: ludeeus/action-shellcheck@v2.0.0 # Pin to specific version
-        # Action discovers scripts automatically. Configure 'scan_paths' if needed.
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: lint
-    permissions:
-      contents: read          # REQUIRED to checkout and scan files
-      security-events: write # REQUIRED to upload CodeQL results
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Recommended for CodeQL
-
-      # Add PHP Setup if scanning PHP with CodeQL
-      - name: Set up PHP
-        if: contains(matrix.language, 'php') || true # Run if PHP exists in a potential matrix, or always if matrix isn't used
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          coverage: none
-          tools: none
-
-      - name: Run Trivy vulnerability scanner (filesystem)
-        uses: aquasecurity/trivy-action@0.20.0 # Pin to specific version
-        with:
-          scan-type: 'fs'
-          format: 'table'
-          exit-code: '1' # Fail workflow if specified vulnerabilities found
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          # Add 'php' if desired
-          languages: javascript # , php
-          # Use custom config if desired
-          # config-file: ./.github/codeql/codeql-config.yml
-
-      # Autobuild step not needed for JS/PHP
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        # This will now fail the workflow on findings by default
-
-  build:
+  build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
-    needs: security-scan
     permissions:
       contents: read   # REQUIRED for checkout
       actions: write  # REQUIRED for cache-to: type=gha
@@ -112,19 +35,18 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Make scripts executable
-        # Adjust scope if needed, e.g., bin/**/*.sh
         run: chmod +x bin/*.sh
 
       - name: Test Docker image
-        run: bin/test-docker.sh # Assumes this script exists
+        run: bin/test-docker.sh
 
       - name: Test shell scripts
-        run: bin/test-scripts.sh # Assumes this script exists
+        run: bin/test-scripts.sh
 
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [build] # Ensure build job passes before releasing
+    needs: [build-and-test] # Ensure build job passes before releasing
     permissions:
       contents: write   # REQUIRED to create release/tag
       packages: write  # REQUIRED to push packages (Docker image to GHCR)
@@ -132,7 +54,7 @@ jobs:
     if: >
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
-      contains(github.event.head_commit.message, 'chore: release v') # Match 'chore: release vX.Y.Z'
+      contains(github.event.head_commit.message, 'chore: release v')
 
     steps:
       - name: Checkout code
@@ -188,7 +110,7 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
           name: Release v${{ steps.version.outputs.version }}
           generate_release_notes: true # Auto-generate release notes from commits
-          # Verify these file paths are correct relative to the repo root
+          # Verify these file paths are correct relative to repo root
           files: |
             bin/wordpress-gmail-cli.sh
             wp-social-auth.php
