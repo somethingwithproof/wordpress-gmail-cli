@@ -32,6 +32,8 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           queries: security-and-quality
+          # Disable the default CodeQL setup to avoid conflicts
+          config-file: ./.github/codeql/codeql-config.yml
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3

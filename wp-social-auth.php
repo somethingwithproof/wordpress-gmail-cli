@@ -60,11 +60,26 @@ class WP_Social_Auth {
      * Handle the social login callback
      */
     public function handle_social_login_callback() {
+        // Verify nonce for security
         $provider = isset($_GET['provider']) ? sanitize_text_field($_GET['provider']) : '';
         $code = isset($_GET['code']) ? sanitize_text_field($_GET['code']) : '';
+        $state = isset($_GET['state']) ? sanitize_text_field($_GET['state']) : '';
+        
+        // Validate provider
+        if (!in_array($provider, ['google', 'facebook'], true)) {
+            wp_safe_redirect(wp_login_url());
+            exit;
+        }
+        
+        // Verify state parameter to prevent CSRF
+        $nonce_action = $provider === 'google' ? 'google_login' : 'facebook_login';
+        if (!wp_verify_nonce($state, $nonce_action)) {
+            wp_safe_redirect(wp_login_url() . '?login=failed&reason=invalid_state');
+            exit;
+        }
         
         if (empty($code)) {
-            wp_redirect(wp_login_url());
+            wp_safe_redirect(wp_login_url());
             exit;
         }
         
@@ -77,14 +92,16 @@ class WP_Social_Auth {
                 $user_data = $this->get_facebook_user_data($code);
             }
             
-            if ($user_data && isset($user_data['email'])) {
+            if ($user_data && isset($user_data['email']) && is_email($user_data['email'])) {
                 $this->login_or_create_user($user_data);
             } else {
-                wp_redirect(wp_login_url() . '?login=failed');
+                wp_safe_redirect(wp_login_url() . '?login=failed');
                 exit;
             }
         } catch (Exception $e) {
-            wp_redirect(wp_login_url() . '?login=failed&error=' . urlencode($e->getMessage()));
+            // Don't expose detailed error messages to users
+            error_log('Social login error: ' . $e->getMessage());
+            wp_safe_redirect(wp_login_url() . '?login=failed');
             exit;
         }
     }
@@ -256,9 +273,9 @@ class WP_Social_Auth {
         
         // Redirect to admin dashboard or home page
         if (user_can($user->ID, 'manage_options')) {
-            wp_redirect(admin_url());
+            wp_safe_redirect(admin_url());
         } else {
-            wp_redirect(home_url());
+            wp_safe_redirect(home_url());
         }
         exit;
     }
