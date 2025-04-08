@@ -27,7 +27,8 @@ jobs:
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          if [[ "$COMMIT_MESSAGE" == *"chore: release"* ]]; then
+          # Use a safer pattern matching approach
+          if [[ "$COMMIT_MESSAGE" =~ chore:\ release ]]; then
             echo "is_release=true" >> $GITHUB_OUTPUT
           else
             echo "is_release=false" >> $GITHUB_OUTPUT
