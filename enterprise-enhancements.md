@@ -10,20 +10,20 @@ This document outlines enhancements to make the WordPress Gmail CLI tool more su
 # Add support for HashiCorp Vault
 configure_vault_integration() {
     log "INFO" "Configuring Vault integration..."
-    
+
     # Check if Vault CLI is installed
     if ! command_exists vault; then
         log "ERROR" "Vault CLI not found. Please install HashiCorp Vault."
         exit 1
     }
-    
+
     # Store credentials in Vault
     vault kv put secret/wordpress-gmail-cli/credentials \
         client_id="${CLIENT_ID}" \
         client_secret="${CLIENT_SECRET}" \
         refresh_token="${REFRESH_TOKEN}" \
         email="${EMAIL}"
-    
+
     # Create a script to retrieve credentials from Vault
     cat > /etc/postfix/gmail-api/vault-credentials.sh << 'EOF'
 #!/bin/bash
@@ -48,12 +48,12 @@ cat > /etc/postfix/gmail-api/credentials.json << EOT
 EOT
 chmod 600 /etc/postfix/gmail-api/credentials.json
 EOF
-    
+
     chmod 700 /etc/postfix/gmail-api/vault-credentials.sh
-    
+
     # Add to cron to periodically refresh credentials
     echo "0 */6 * * * root /etc/postfix/gmail-api/vault-credentials.sh > /dev/null 2>&1" > /etc/cron.d/gmail-api-vault
-    
+
     log "SUCCESS" "Vault integration configured"
 }
 ```
@@ -64,12 +64,12 @@ EOF
 # Set proper SELinux contexts for enterprise environments
 configure_selinux() {
     log "INFO" "Configuring SELinux contexts..."
-    
+
     if command_exists semanage && command_exists restorecon; then
         # Set proper contexts for credential files
         semanage fcontext -a -t postfix_etc_t "/etc/postfix/gmail-api(/.*)?"
         restorecon -Rv /etc/postfix/gmail-api
-        
+
         log "SUCCESS" "SELinux contexts configured"
     else
         log "WARNING" "SELinux tools not found, skipping context configuration"
@@ -85,11 +85,11 @@ configure_selinux() {
 # Set up a metrics endpoint for Prometheus monitoring
 setup_prometheus_metrics() {
     log "INFO" "Setting up Prometheus metrics..."
-    
+
     # Install required packages
     apt-get install -y python3-pip
     pip3 install prometheus_client flask
-    
+
     # Create metrics service
     cat > /opt/gmail-metrics/metrics.py << 'EOF'
 #!/usr/bin/env python3
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     start_http_server(9090)
     app.run(host='0.0.0.0', port=9091)
 EOF
-    
+
     # Create systemd service
     cat > /etc/systemd/system/gmail-metrics.service << EOF
 [Unit]
@@ -147,12 +147,12 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 EOF
-    
+
     # Enable and start service
     systemctl daemon-reload
     systemctl enable gmail-metrics
     systemctl start gmail-metrics
-    
+
     log "SUCCESS" "Prometheus metrics endpoint configured on port 9090"
 }
 ```
@@ -163,11 +163,11 @@ EOF
 # Configure logging to ELK stack
 configure_elk_logging() {
     log "INFO" "Configuring centralized logging..."
-    
+
     # Install Filebeat
     curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.15.0-amd64.deb
     dpkg -i filebeat-7.15.0-amd64.deb
-    
+
     # Configure Filebeat
     cat > /etc/filebeat/filebeat.yml << EOF
 filebeat.inputs:
@@ -194,18 +194,18 @@ output.elasticsearch:
   hosts: ["elasticsearch.example.com:9200"]
   username: "elastic"
   password: "your-password"
-  
+
 setup.kibana:
   host: "kibana.example.com:5601"
 EOF
-    
+
     # Enable and start Filebeat
     systemctl enable filebeat
     systemctl start filebeat
-    
+
     # Configure token refresh script to log to a file
     sed -i 's|echo "Access token refreshed successfully (expires in ${EXPIRES_IN}s)"|echo "$(date): Access token refreshed successfully (expires in ${EXPIRES_IN}s)" >> /etc/postfix/gmail-api/token-refresh.log|g' /etc/postfix/gmail-api/refresh-token.sh
-    
+
     log "SUCCESS" "Centralized logging configured"
 }
 ```
@@ -229,7 +229,7 @@ Create an Ansible playbook for automated deployment:
     gmail_refresh_token: "{{ vault_gmail_refresh_token }}"
     domain: "example.com"
     wp_path: "/var/www/html"
-    
+
   tasks:
     - name: Ensure dependencies are installed
       apt:
@@ -240,28 +240,28 @@ Create an Ansible playbook for automated deployment:
           - jq
         state: present
         update_cache: yes
-        
+
     - name: Create Gmail API directory
       file:
         path: /etc/postfix/gmail-api
         state: directory
-        mode: '0700'
-        
+        mode: "0700"
+
     - name: Copy credentials file
       template:
         src: templates/credentials.json.j2
         dest: /etc/postfix/gmail-api/credentials.json
-        mode: '0600'
-        
+        mode: "0600"
+
     - name: Copy token refresh script
       template:
         src: templates/refresh-token.sh.j2
         dest: /etc/postfix/gmail-api/refresh-token.sh
-        mode: '0700'
-        
+        mode: "0700"
+
     - name: Run token refresh script
       command: /etc/postfix/gmail-api/refresh-token.sh
-        
+
     - name: Configure cron job for token refresh
       cron:
         name: "Refresh Gmail API token"
@@ -269,24 +269,24 @@ Create an Ansible playbook for automated deployment:
         minute: "*/30"
         user: root
         cron_file: gmail-api-token
-        
+
     - name: Configure Postfix
       template:
         src: templates/main.cf.j2
         dest: /etc/postfix/main.cf
         backup: yes
-        
+
     - name: Restart Postfix
       service:
         name: postfix
         state: restarted
-        
+
     - name: Configure WordPress plugin
       template:
         src: templates/gmail-api.php.j2
         dest: "{{ wp_path }}/wp-content/mu-plugins/gmail-api.php"
-        mode: '0644'
-        
+        mode: "0644"
+
     - name: Set WordPress plugin permissions
       file:
         path: "{{ wp_path }}/wp-content/mu-plugins"
@@ -342,7 +342,7 @@ CMD ["postfix", "start-fg"]
 # Configure centralized credential management
 configure_central_credentials() {
     log "INFO" "Configuring centralized credential management..."
-    
+
     # Create a script to fetch credentials from a central server
     cat > /etc/postfix/gmail-api/fetch-credentials.sh << 'EOF'
 #!/bin/bash
@@ -373,12 +373,12 @@ chmod 600 /etc/postfix/gmail-api/credentials.json
 # Run token refresh
 /etc/postfix/gmail-api/refresh-token.sh
 EOF
-    
+
     chmod 700 /etc/postfix/gmail-api/fetch-credentials.sh
-    
+
     # Add to cron to periodically fetch credentials
     echo "0 */12 * * * root /etc/postfix/gmail-api/fetch-credentials.sh > /dev/null 2>&1" > /etc/cron.d/gmail-api-fetch
-    
+
     log "SUCCESS" "Centralized credential management configured"
 }
 ```
@@ -389,16 +389,16 @@ EOF
 # Configure for load balanced environment
 configure_load_balancing() {
     log "INFO" "Configuring for load balanced environment..."
-    
+
     # Update Postfix configuration for load balanced environment
     cat >> /etc/postfix/main.cf << EOF
 
 # Load balancing configuration
-smtp_connection_cache_destinations = 
+smtp_connection_cache_destinations =
 smtp_connection_cache_on_demand = no
 smtp_connection_reuse_time_limit = 300s
 EOF
-    
+
     # Create a health check endpoint
     mkdir -p /var/www/health
     cat > /var/www/health/gmail-api-health.php << 'EOF'
@@ -424,14 +424,14 @@ if (file_exists($token_file)) {
 header('Content-Type: application/json');
 echo json_encode($health);
 EOF
-    
+
     # Configure Nginx for health checks (if installed)
     if command_exists nginx; then
         cat > /etc/nginx/conf.d/health-check.conf << EOF
 server {
     listen 8080;
     server_name localhost;
-    
+
     location /health {
         fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
         fastcgi_index gmail-api-health.php;
@@ -440,10 +440,10 @@ server {
     }
 }
 EOF
-        
+
         systemctl restart nginx
     fi
-    
+
     log "SUCCESS" "Load balancing configuration completed"
 }
 ```
@@ -456,10 +456,10 @@ EOF
 # Set up LDAP authentication for admin interface
 configure_ldap_auth() {
     log "INFO" "Configuring LDAP authentication..."
-    
+
     # Install required packages
     apt-get install -y php-ldap
-    
+
     # Create admin interface with LDAP authentication
     mkdir -p /var/www/gmail-admin
     cat > /var/www/gmail-admin/index.php << 'EOF'
@@ -477,23 +477,23 @@ $ldap_admin_group = 'cn=mail-admins,ou=groups,dc=example,dc=com';
 // Authentication function
 function ldap_authenticate($username, $password) {
     global $ldap_server, $ldap_port, $ldap_base_dn, $ldap_user_dn, $ldap_group_dn, $ldap_admin_group;
-    
+
     $ldap = ldap_connect($ldap_server, $ldap_port);
     ldap_set_option($ldap, LDAP_OPT_PROTOCOL_VERSION, 3);
-    
+
     $user_dn = "uid=$username,$ldap_user_dn";
-    
+
     if ($bind = ldap_bind($ldap, $user_dn, $password)) {
         // Check if user is in admin group
         $filter = "(memberUid=$username)";
         $search = ldap_search($ldap, $ldap_admin_group, $filter);
         $entries = ldap_get_entries($ldap, $search);
-        
+
         if ($entries['count'] > 0) {
             return true;
         }
     }
-    
+
     return false;
 }
 
@@ -557,10 +557,10 @@ if (!$authenticated) {
     // Admin interface
     $token_file = '/etc/postfix/gmail-api/token.json';
     $credentials_file = '/etc/postfix/gmail-api/credentials.json';
-    
+
     $token_data = file_exists($token_file) ? json_decode(file_get_contents($token_file), true) : null;
     $credentials_data = file_exists($credentials_file) ? json_decode(file_get_contents($credentials_file), true) : null;
-    
+
     ?>
     <!DOCTYPE html>
     <html>
@@ -586,11 +586,11 @@ if (!$authenticated) {
                 <h2>Gmail API Admin</h2>
                 <a href="?logout=1" class="logout">Logout</a>
             </div>
-            
+
             <div class="card">
                 <h3>Token Status</h3>
                 <?php if ($token_data): ?>
-                    <?php 
+                    <?php
                     $now = time();
                     $expires_in = $token_data['expiry_time'] - $now;
                     $status_class = $expires_in > 0 ? 'active' : 'expired';
@@ -614,7 +614,7 @@ if (!$authenticated) {
                     <p>No token data available.</p>
                 <?php endif; ?>
             </div>
-            
+
             <div class="card">
                 <h3>Credentials</h3>
                 <?php if ($credentials_data): ?>
@@ -640,7 +640,7 @@ if (!$authenticated) {
                     <p>No credentials available.</p>
                 <?php endif; ?>
             </div>
-            
+
             <div class="card">
                 <h3>System Status</h3>
                 <table>
@@ -664,7 +664,7 @@ if (!$authenticated) {
     <?php
 }
 EOF
-    
+
     # Create refresh script
     cat > /var/www/gmail-admin/refresh.php << 'EOF'
 <?php
@@ -682,14 +682,14 @@ $output = shell_exec('sudo /etc/postfix/gmail-api/refresh-token.sh 2>&1');
 // Redirect back to admin page
 header('Location: index.php?refreshed=1');
 EOF
-    
+
     # Configure sudo for www-data
     echo "www-data ALL=(root) NOPASSWD: /etc/postfix/gmail-api/refresh-token.sh" > /etc/sudoers.d/gmail-admin
     chmod 440 /etc/sudoers.d/gmail-admin
-    
+
     # Set permissions
     chown -R www-data:www-data /var/www/gmail-admin
-    
+
     log "SUCCESS" "LDAP authentication configured"
 }
 ```
@@ -700,10 +700,10 @@ EOF
 # Set up API for email status and management
 configure_api() {
     log "INFO" "Configuring management API..."
-    
+
     # Install required packages
     apt-get install -y php-fpm nginx
-    
+
     # Create API endpoints
     mkdir -p /var/www/gmail-api
     cat > /var/www/gmail-api/index.php << 'EOF'
@@ -717,12 +717,12 @@ function authenticate() {
         'staging' => 'your-staging-api-key',
         'development' => 'your-development-api-key'
     ];
-    
+
     $headers = getallheaders();
     if (!isset($headers['X-API-Key'])) {
         return false;
     }
-    
+
     $api_key = $headers['X-API-Key'];
     return in_array($api_key, $api_keys);
 }
@@ -751,13 +751,13 @@ switch ($path) {
         // Get token and credentials status
         $token_file = '/etc/postfix/gmail-api/token.json';
         $credentials_file = '/etc/postfix/gmail-api/credentials.json';
-        
+
         $token_data = file_exists($token_file) ? json_decode(file_get_contents($token_file), true) : null;
         $credentials_data = file_exists($credentials_file) ? json_decode(file_get_contents($credentials_file), true) : null;
-        
+
         $now = time();
         $token_valid = $token_data && isset($token_data['expiry_time']) && $token_data['expiry_time'] > $now;
-        
+
         $response = [
             'status' => $token_valid ? 'healthy' : 'unhealthy',
             'token' => [
@@ -773,64 +773,64 @@ switch ($path) {
                 'running' => trim(shell_exec('systemctl is-active postfix')) === 'active'
             ]
         ];
-        
+
         json_response($response);
         break;
-        
+
     case 'refresh':
         // Refresh token
         if ($method !== 'POST') {
             json_response(['error' => 'Method not allowed'], 405);
         }
-        
+
         $output = shell_exec('/etc/postfix/gmail-api/refresh-token.sh 2>&1');
         $success = strpos($output, 'successfully') !== false;
-        
+
         json_response([
             'success' => $success,
             'message' => $output
         ]);
         break;
-        
+
     case 'logs':
         // Get recent logs
         $log_file = '/etc/postfix/gmail-api/token-refresh.log';
         $lines = isset($params['lines']) ? intval($params['lines']) : 10;
-        
+
         if (file_exists($log_file)) {
             $logs = explode("\n", trim(shell_exec("tail -n $lines $log_file")));
         } else {
             $logs = [];
         }
-        
+
         json_response(['logs' => $logs]);
         break;
-        
+
     default:
         json_response(['error' => 'Not found'], 404);
 }
 EOF
-    
+
     # Configure Nginx
     cat > /etc/nginx/conf.d/gmail-api.conf << EOF
 server {
     listen 8081;
     server_name localhost;
-    
+
     root /var/www/gmail-api;
     index index.php;
-    
+
     location / {
         try_files \$uri \$uri/ /index.php?\$args;
     }
-    
+
     location ~ \.php$ {
         fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
         include fastcgi_params;
     }
-    
+
     # Restrict access by IP
     allow 10.0.0.0/8;
     allow 172.16.0.0/12;
@@ -838,13 +838,13 @@ server {
     deny all;
 }
 EOF
-    
+
     # Set permissions
     chown -R www-data:www-data /var/www/gmail-api
-    
+
     # Restart Nginx
     systemctl restart nginx
-    
+
     log "SUCCESS" "Management API configured on port 8081"
 }
 ```
