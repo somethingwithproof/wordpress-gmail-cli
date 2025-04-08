@@ -5,10 +5,15 @@ on:
   release:
     types: [created]
 
+# Default permissions are read-only
+permissions: read-all
+
 jobs:
   build:
     name: Build and Generate Artifacts
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
     steps:
