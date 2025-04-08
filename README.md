@@ -1,5 +1,11 @@
 # WordPress Gmail CLI
 
+[![CI/CD Pipeline](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/ci-cd-pipeline.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/ci-cd-pipeline.yml)
+[![Security Scan](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/security-scan.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/security-scan.yml)
+[![CodeQL](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/codeql-analysis.yml)
+[![Docker Build](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/docker-build.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/docker-build.yml)
+[![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
+
 A simple CLI tool to quickly configure WordPress and Postfix for sending outbound emails using Google API. Ideal for automating reliable email delivery setup on your WordPress server, especially on platforms like Digital Ocean that block standard SMTP ports.
 
 ## Features
@@ -183,6 +189,66 @@ If emails are not being sent:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Docker Usage
+
+This project includes Docker support for easy deployment and development:
+
+### Using Docker Image
+
+```bash
+# Pull the image from GitHub Container Registry
+docker pull ghcr.io/thomasvincent/wordpress-gmail-cli:latest
+
+# Run the container with your credentials
+docker run --rm \
+  -e EMAIL="your-email@gmail.com" \
+  -e CLIENT_ID="your-client-id" \
+  -e CLIENT_SECRET="your-client-secret" \
+  -e REFRESH_TOKEN="your-refresh-token" \
+  -e DOMAIN="example.com" \
+  ghcr.io/thomasvincent/wordpress-gmail-cli:latest
+```
+
+### Local Development with Docker Compose
+
+For local development and testing, use Docker Compose:
+
+```bash
+# Start the development environment
+docker-compose up -d
+
+# Run the CLI tool within the environment
+docker-compose exec cli ./wordpress-gmail-cli.sh --help
+
+# Access WordPress at http://localhost:8080
+# Access phpMyAdmin at http://localhost:8081
+```
+
+## CI/CD and Security Features
+
+This project uses GitHub Actions for CI/CD and implements several security best practices:
+
+### Continuous Integration
+
+- Automated linting and testing for shell scripts and PHP files
+- Security scanning with ShellCheck, Trivy, and CodeQL
+- Docker image building and testing
+
+### Continuous Deployment
+
+- Automated releases with semantic versioning
+- Docker image publishing to GitHub Container Registry
+- SLSA provenance generation for supply chain security
+
+### Security Features
+
+- SLSA Level 3 compliance for supply chain security
+- Automated dependency updates with Dependabot
+- Comprehensive security scanning in CI pipeline
+- Security policy and vulnerability reporting process
+
+For more details on security practices, see the [SECURITY.md](SECURITY.md) file.
 
 ## Enterprise Enhancements
 
