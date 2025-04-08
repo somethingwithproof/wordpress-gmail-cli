@@ -13,78 +13,78 @@ RESET="\033[0m"
 
 # Function to log messages
 log() {
-    local level=$1
-    local message=$2
-    local color=$RESET
-    
-    case $level in
-        "INFO") color=$BLUE ;;
-        "SUCCESS") color=$GREEN ;;
-        "WARNING") color=$YELLOW ;;
-        "ERROR") color=$RED ;;
-    esac
-    
-    echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${color}${level}${RESET}: ${message}"
+	local level=$1
+	local message=$2
+	local color=${RESET}
+
+	case ${level} in
+	"INFO") color=${BLUE} ;;
+	"SUCCESS") color=${GREEN} ;;
+	"WARNING") color=${YELLOW} ;;
+	"ERROR") color=${RED} ;;
+	esac
+
+	echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${color}${level}${RESET}: ${message}"
 }
 
 # Function to check if command exists
 command_exists() {
-    command -v "$1" >/dev/null 2>&1
+	command -v "$1" >/dev/null 2>&1
 }
 
 # Function to check if running as root
 check_root() {
-    if [ "$(id -u)" -ne 0 ]; then
-        log "ERROR" "This script must be run as root"
-        exit 1
-    fi
+	if [[ "$(id -u)" -ne 0 ]]; then
+		log "ERROR" "This script must be run as root"
+		exit 1
+	fi
 }
 
 # Function to display script usage
 usage() {
-    echo -e "${BOLD}WordPress Gmail CLI - Enterprise Setup${RESET}"
-    echo "A script to implement enterprise enhancements for WordPress Gmail CLI"
-    echo
-    echo -e "${BOLD}Usage:${RESET}"
-    echo "  $0 [options]"
-    echo
-    echo -e "${BOLD}Options:${RESET}"
-    echo "  --vault                  Configure HashiCorp Vault integration"
-    echo "  --monitoring             Set up Prometheus monitoring"
-    echo "  --logging                Configure centralized logging with ELK"
-    echo "  --ldap                   Set up LDAP authentication for admin interface"
-    echo "  --api                    Configure management API"
-    echo "  --load-balancing         Configure for load balanced environment"
-    echo "  --all                    Enable all enterprise features"
-    echo "  -h, --help               Display this help message"
-    echo
-    echo -e "${BOLD}Example:${RESET}"
-    echo "  $0 --vault --monitoring"
-    exit 1
+	echo -e "${BOLD}WordPress Gmail CLI - Enterprise Setup${RESET}"
+	echo "A script to implement enterprise enhancements for WordPress Gmail CLI"
+	echo
+	echo -e "${BOLD}Usage:${RESET}"
+	echo "  $0 [options]"
+	echo
+	echo -e "${BOLD}Options:${RESET}"
+	echo "  --vault                  Configure HashiCorp Vault integration"
+	echo "  --monitoring             Set up Prometheus monitoring"
+	echo "  --logging                Configure centralized logging with ELK"
+	echo "  --ldap                   Set up LDAP authentication for admin interface"
+	echo "  --api                    Configure management API"
+	echo "  --load-balancing         Configure for load balanced environment"
+	echo "  --all                    Enable all enterprise features"
+	echo "  -h, --help               Display this help message"
+	echo
+	echo -e "${BOLD}Example:${RESET}"
+	echo "  $0 --vault --monitoring"
+	exit 1
 }
 
 # Function to configure Vault integration
 configure_vault_integration() {
-    log "INFO" "Configuring Vault integration..."
-    
-    # Check if Vault CLI is installed
-    if ! command_exists vault; then
-        log "ERROR" "Vault CLI not found. Please install HashiCorp Vault."
-        return 1
-    }
-    
+	log "INFO" "Configuring Vault integration..."
+
+	# Check if Vault CLI is installed
+	if ! command_exists vault; then
+		log "ERROR" "Vault CLI not found. Please install HashiCorp Vault."
+		return 1
+	fi
+
     # Prompt for Vault address
-    read -p "Enter Vault server address (e.g., https://vault.example.com:8200): " VAULT_ADDR
+    read -r -p "Enter Vault server address (e.g., https://vault.example.com:8200): " VAULT_ADDR
     
     # Prompt for Vault token
-    read -p "Enter Vault token: " VAULT_TOKEN
-    
-    # Create credentials directory if it doesn't exist
-    mkdir -p /etc/postfix/gmail-api
-    chmod 700 /etc/postfix/gmail-api
-    
-    # Create a script to retrieve credentials from Vault
-    cat > /etc/postfix/gmail-api/vault-credentials.sh << EOF
+    read -r -p "Enter Vault token: " VAULT_TOKEN
+
+	# Create credentials directory if it doesn't exist
+	mkdir -p /etc/postfix/gmail-api
+	chmod 700 /etc/postfix/gmail-api
+
+	# Create a script to retrieve credentials from Vault
+	cat >/etc/postfix/gmail-api/vault-credentials.sh <<EOF
 #!/bin/bash
 export VAULT_ADDR="${VAULT_ADDR}"
 export VAULT_TOKEN="${VAULT_TOKEN}"
@@ -107,38 +107,38 @@ cat > /etc/postfix/gmail-api/credentials.json << EOT
 EOT
 chmod 600 /etc/postfix/gmail-api/credentials.json
 EOF
-    
-    chmod 700 /etc/postfix/gmail-api/vault-credentials.sh
-    
-    # Add to cron to periodically refresh credentials
-    echo "0 */6 * * * root /etc/postfix/gmail-api/vault-credentials.sh > /dev/null 2>&1" > /etc/cron.d/gmail-api-vault
-    chmod 644 /etc/cron.d/gmail-api-vault
-    
-    log "INFO" "Testing Vault connection..."
-    if /etc/postfix/gmail-api/vault-credentials.sh; then
-        log "SUCCESS" "Vault integration configured successfully"
-    else
-        log "ERROR" "Failed to retrieve credentials from Vault"
-        return 1
-    fi
-    
-    return 0
+
+	chmod 700 /etc/postfix/gmail-api/vault-credentials.sh
+
+	# Add to cron to periodically refresh credentials
+	echo "0 */6 * * * root /etc/postfix/gmail-api/vault-credentials.sh > /dev/null 2>&1" >/etc/cron.d/gmail-api-vault
+	chmod 644 /etc/cron.d/gmail-api-vault
+
+	log "INFO" "Testing Vault connection..."
+	if /etc/postfix/gmail-api/vault-credentials.sh; then
+		log "SUCCESS" "Vault integration configured successfully"
+	else
+		log "ERROR" "Failed to retrieve credentials from Vault"
+		return 1
+	fi
+
+	return 0
 }
 
 # Function to set up Prometheus monitoring
 setup_prometheus_metrics() {
-    log "INFO" "Setting up Prometheus metrics..."
-    
-    # Install required packages
-    apt-get update
-    apt-get install -y python3-pip
-    pip3 install prometheus_client flask
-    
-    # Create metrics directory
-    mkdir -p /opt/gmail-metrics
-    
-    # Create metrics service
-    cat > /opt/gmail-metrics/metrics.py << 'EOF'
+	log "INFO" "Setting up Prometheus metrics..."
+
+	# Install required packages
+	apt-get update
+	apt-get install -y python3-pip
+	pip3 install prometheus_client flask
+
+	# Create metrics directory
+	mkdir -p /opt/gmail-metrics
+
+	# Create metrics service
+	cat >/opt/gmail-metrics/metrics.py <<'EOF'
 #!/usr/bin/env python3
 from prometheus_client import Counter, Gauge, generate_latest, start_http_server
 from flask import Flask, Response
@@ -178,11 +178,11 @@ if __name__ == '__main__':
     start_http_server(9090)
     app.run(host='0.0.0.0', port=9091)
 EOF
-    
-    chmod +x /opt/gmail-metrics/metrics.py
-    
-    # Create systemd service
-    cat > /etc/systemd/system/gmail-metrics.service << EOF
+
+	chmod +x /opt/gmail-metrics/metrics.py
+
+	# Create systemd service
+	cat >/etc/systemd/system/gmail-metrics.service <<EOF
 [Unit]
 Description=Gmail Metrics Exporter
 After=network.target
@@ -196,41 +196,41 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 EOF
-    
-    # Enable and start service
-    systemctl daemon-reload
-    systemctl enable gmail-metrics
-    systemctl start gmail-metrics
-    
-    log "SUCCESS" "Prometheus metrics endpoint configured on port 9090"
-    log "INFO" "You can now add this endpoint to your Prometheus configuration"
-    
-    return 0
+
+	# Enable and start service
+	systemctl daemon-reload
+	systemctl enable gmail-metrics
+	systemctl start gmail-metrics
+
+	log "SUCCESS" "Prometheus metrics endpoint configured on port 9090"
+	log "INFO" "You can now add this endpoint to your Prometheus configuration"
+
+	return 0
 }
 
 # Function to configure centralized logging
 configure_elk_logging() {
-    log "INFO" "Configuring centralized logging..."
-    
-    # Prompt for Elasticsearch server
-    read -p "Enter Elasticsearch server address (e.g., elasticsearch.example.com:9200): " ES_SERVER
-    
-    # Prompt for Kibana server
-    read -p "Enter Kibana server address (e.g., kibana.example.com:5601): " KIBANA_SERVER
-    
-    # Prompt for credentials
-    read -p "Enter Elasticsearch username: " ES_USER
-    read -p "Enter Elasticsearch password: " ES_PASS
-    
-    # Install Filebeat
-    if ! command_exists filebeat; then
-        log "INFO" "Installing Filebeat..."
-        curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.15.0-amd64.deb
-        dpkg -i filebeat-7.15.0-amd64.deb
-    fi
-    
-    # Configure Filebeat
-    cat > /etc/filebeat/filebeat.yml << EOF
+	log "INFO" "Configuring centralized logging..."
+
+	# Prompt for Elasticsearch server
+	read -r -p "Enter Elasticsearch server address (e.g., elasticsearch.example.com:9200): " ES_SERVER
+
+	# Prompt for Kibana server
+	read -r -p "Enter Kibana server address (e.g., kibana.example.com:5601): " KIBANA_SERVER
+
+	# Prompt for credentials
+	read -r -p "Enter Elasticsearch username: " ES_USER
+	read -r -p "Enter Elasticsearch password: " ES_PASS
+
+	# Install Filebeat
+	if ! command_exists filebeat; then
+		log "INFO" "Installing Filebeat..."
+		curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.15.0-amd64.deb
+		dpkg -i filebeat-7.15.0-amd64.deb
+	fi
+
+	# Configure Filebeat
+	cat >/etc/filebeat/filebeat.yml <<EOF
 filebeat.inputs:
 - type: log
   enabled: true
@@ -259,49 +259,49 @@ output.elasticsearch:
 setup.kibana:
   host: "${KIBANA_SERVER}"
 EOF
-    
-    # Create token refresh log file
-    touch /etc/postfix/gmail-api/token-refresh.log
-    chmod 644 /etc/postfix/gmail-api/token-refresh.log
-    
-    # Modify token refresh script to log to a file
-    if [ -f /etc/postfix/gmail-api/refresh-token.sh ]; then
-        sed -i 's|echo "Access token refreshed successfully (expires in ${EXPIRES_IN}s)"|echo "$(date): Access token refreshed successfully (expires in ${EXPIRES_IN}s)" >> /etc/postfix/gmail-api/token-refresh.log|g' /etc/postfix/gmail-api/refresh-token.sh
-    else
-        log "WARNING" "Token refresh script not found. Logging configuration may be incomplete."
-    fi
-    
-    # Enable and start Filebeat
-    systemctl enable filebeat
-    systemctl start filebeat
-    
-    log "SUCCESS" "Centralized logging configured"
-    
-    return 0
+
+	# Create token refresh log file
+	touch /etc/postfix/gmail-api/token-refresh.log
+	chmod 644 /etc/postfix/gmail-api/token-refresh.log
+
+	# Modify token refresh script to log to a file
+	if [[ -f /etc/postfix/gmail-api/refresh-token.sh ]]; then
+		sed -i 's|echo "Access token refreshed successfully (expires in ${EXPIRES_IN}s)"|echo "$(date): Access token refreshed successfully (expires in ${EXPIRES_IN}s)" >> /etc/postfix/gmail-api/token-refresh.log|g' /etc/postfix/gmail-api/refresh-token.sh
+	else
+		log "WARNING" "Token refresh script not found. Logging configuration may be incomplete."
+	fi
+
+	# Enable and start Filebeat
+	systemctl enable filebeat
+	systemctl start filebeat
+
+	log "SUCCESS" "Centralized logging configured"
+
+	return 0
 }
 
 # Function to set up LDAP authentication
 configure_ldap_auth() {
-    log "INFO" "Configuring LDAP authentication..."
-    
-    # Prompt for LDAP server details
-    read -p "Enter LDAP server address: " LDAP_SERVER
-    read -p "Enter LDAP port (default: 389): " LDAP_PORT
-    LDAP_PORT=${LDAP_PORT:-389}
-    read -p "Enter LDAP base DN (e.g., dc=example,dc=com): " LDAP_BASE_DN
-    read -p "Enter LDAP users DN (e.g., ou=users,dc=example,dc=com): " LDAP_USER_DN
-    read -p "Enter LDAP groups DN (e.g., ou=groups,dc=example,dc=com): " LDAP_GROUP_DN
-    read -p "Enter LDAP admin group (e.g., cn=mail-admins,ou=groups,dc=example,dc=com): " LDAP_ADMIN_GROUP
-    
-    # Install required packages
-    apt-get update
-    apt-get install -y php-ldap php-fpm nginx
-    
-    # Create admin interface directory
-    mkdir -p /var/www/gmail-admin
-    
-    # Create admin interface with LDAP authentication
-    cat > /var/www/gmail-admin/index.php << EOF
+	log "INFO" "Configuring LDAP authentication..."
+
+	# Prompt for LDAP server details
+	read -r -p "Enter LDAP server address: " LDAP_SERVER
+	read -r -p "Enter LDAP port (default: 389): " LDAP_PORT
+	LDAP_PORT=${LDAP_PORT:-389}
+	read -r -p "Enter LDAP base DN (e.g., dc=example,dc=com): " LDAP_BASE_DN
+	read -r -p "Enter LDAP users DN (e.g., ou=users,dc=example,dc=com): " LDAP_USER_DN
+	read -r -p "Enter LDAP groups DN (e.g., ou=groups,dc=example,dc=com): " LDAP_GROUP_DN
+	read -r -p "Enter LDAP admin group (e.g., cn=mail-admins,ou=groups,dc=example,dc=com): " LDAP_ADMIN_GROUP
+
+	# Install required packages
+	apt-get update
+	apt-get install -y php-ldap php-fpm nginx
+
+	# Create admin interface directory
+	mkdir -p /var/www/gmail-admin
+
+	# Create admin interface with LDAP authentication
+	cat >/var/www/gmail-admin/index.php <<EOF
 <?php
 session_start();
 
@@ -503,9 +503,9 @@ if (!\$authenticated) {
     <?php
 }
 EOF
-    
-    # Create refresh script
-    cat > /var/www/gmail-admin/refresh.php << 'EOF'
+
+	# Create refresh script
+	cat >/var/www/gmail-admin/refresh.php <<'EOF'
 <?php
 session_start();
 
@@ -521,9 +521,9 @@ $output = shell_exec('sudo /etc/postfix/gmail-api/refresh-token.sh 2>&1');
 // Redirect back to admin page
 header('Location: index.php?refreshed=1');
 EOF
-    
-    # Configure Nginx
-    cat > /etc/nginx/conf.d/gmail-admin.conf << EOF
+
+	# Configure Nginx
+	cat >/etc/nginx/conf.d/gmail-admin.conf <<EOF
 server {
     listen 8082;
     server_name localhost;
@@ -550,41 +550,41 @@ server {
     deny all;
 }
 EOF
-    
-    # Configure sudo for www-data
-    echo "www-data ALL=(root) NOPASSWD: /etc/postfix/gmail-api/refresh-token.sh" > /etc/sudoers.d/gmail-admin
-    chmod 440 /etc/sudoers.d/gmail-admin
-    
-    # Set permissions
-    chown -R www-data:www-data /var/www/gmail-admin
-    
-    # Restart Nginx
-    systemctl restart nginx
-    
-    log "SUCCESS" "LDAP authentication configured"
-    log "INFO" "Admin interface available at http://localhost:8082"
-    
-    return 0
+
+	# Configure sudo for www-data
+	echo "www-data ALL=(root) NOPASSWD: /etc/postfix/gmail-api/refresh-token.sh" >/etc/sudoers.d/gmail-admin
+	chmod 440 /etc/sudoers.d/gmail-admin
+
+	# Set permissions
+	chown -R www-data:www-data /var/www/gmail-admin
+
+	# Restart Nginx
+	systemctl restart nginx
+
+	log "SUCCESS" "LDAP authentication configured"
+	log "INFO" "Admin interface available at http://localhost:8082"
+
+	return 0
 }
 
 # Function to configure management API
 configure_api() {
-    log "INFO" "Configuring management API..."
-    
-    # Generate API keys
-    PROD_KEY=$(openssl rand -hex 16)
-    STAGING_KEY=$(openssl rand -hex 16)
-    DEV_KEY=$(openssl rand -hex 16)
-    
-    # Install required packages
-    apt-get update
-    apt-get install -y php-fpm nginx
-    
-    # Create API directory
-    mkdir -p /var/www/gmail-api
-    
-    # Create API endpoints
-    cat > /var/www/gmail-api/index.php << EOF
+	log "INFO" "Configuring management API..."
+
+	# Generate API keys
+	PROD_KEY=$(openssl rand -hex 16)
+	STAGING_KEY=$(openssl rand -hex 16)
+	DEV_KEY=$(openssl rand -hex 16)
+
+	# Install required packages
+	apt-get update
+	apt-get install -y php-fpm nginx
+
+	# Create API directory
+	mkdir -p /var/www/gmail-api
+
+	# Create API endpoints
+	cat >/var/www/gmail-api/index.php <<EOF
 <?php
 // Simple API for Gmail integration status and management
 
@@ -688,9 +688,9 @@ switch (\$path) {
         json_response(['error' => 'Not found'], 404);
 }
 EOF
-    
-    # Configure Nginx
-    cat > /etc/nginx/conf.d/gmail-api.conf << EOF
+
+	# Configure Nginx
+	cat >/etc/nginx/conf.d/gmail-api.conf <<EOF
 server {
     listen 8081;
     server_name localhost;
@@ -717,47 +717,47 @@ server {
     deny all;
 }
 EOF
-    
-    # Set permissions
-    chown -R www-data:www-data /var/www/gmail-api
-    
-    # Restart Nginx
-    systemctl restart nginx
-    
-    log "SUCCESS" "Management API configured on port 8081"
-    log "INFO" "API Keys:"
-    log "INFO" "  Production: ${PROD_KEY}"
-    log "INFO" "  Staging: ${STAGING_KEY}"
-    log "INFO" "  Development: ${DEV_KEY}"
-    log "INFO" "Example API usage:"
-    log "INFO" "  curl -H 'X-API-Key: ${PROD_KEY}' http://localhost:8081/status"
-    
-    return 0
+
+	# Set permissions
+	chown -R www-data:www-data /var/www/gmail-api
+
+	# Restart Nginx
+	systemctl restart nginx
+
+	log "SUCCESS" "Management API configured on port 8081"
+	log "INFO" "API Keys:"
+	log "INFO" "  Production: ${PROD_KEY}"
+	log "INFO" "  Staging: ${STAGING_KEY}"
+	log "INFO" "  Development: ${DEV_KEY}"
+	log "INFO" "Example API usage:"
+	log "INFO" "  curl -H 'X-API-Key: ${PROD_KEY}' http://localhost:8081/status"
+
+	return 0
 }
 
 # Function to configure load balancing
 configure_load_balancing() {
-    log "INFO" "Configuring for load balanced environment..."
-    
-    # Update Postfix configuration for load balanced environment
-    if [ -f /etc/postfix/main.cf ]; then
-        cat >> /etc/postfix/main.cf << EOF
+	log "INFO" "Configuring for load balanced environment..."
+
+	# Update Postfix configuration for load balanced environment
+	if [[ -f /etc/postfix/main.cf ]]; then
+		cat >>/etc/postfix/main.cf <<EOF
 
 # Load balancing configuration
 smtp_connection_cache_destinations = 
 smtp_connection_cache_on_demand = no
 smtp_connection_reuse_time_limit = 300s
 EOF
-        
-        # Restart Postfix
-        systemctl restart postfix
-    else
-        log "WARNING" "Postfix configuration file not found. Load balancing configuration may be incomplete."
-    fi
-    
-    # Create health check endpoint
-    mkdir -p /var/www/health
-    cat > /var/www/health/gmail-api-health.php << 'EOF'
+
+		# Restart Postfix
+		systemctl restart postfix
+	else
+		log "WARNING" "Postfix configuration file not found. Load balancing configuration may be incomplete."
+	fi
+
+	# Create health check endpoint
+	mkdir -p /var/www/health
+	cat >/var/www/health/gmail-api-health.php <<'EOF'
 <?php
 // Check if token file exists and is valid
 $token_file = '/etc/postfix/gmail-api/token.json';
@@ -780,10 +780,10 @@ if (file_exists($token_file)) {
 header('Content-Type: application/json');
 echo json_encode($health);
 EOF
-    
-    # Configure Nginx for health checks (if installed)
-    if command_exists nginx; then
-        cat > /etc/nginx/conf.d/health-check.conf << EOF
+
+	# Configure Nginx for health checks (if installed)
+	if command_exists nginx; then
+		cat >/etc/nginx/conf.d/health-check.conf <<EOF
 server {
     listen 8080;
     server_name localhost;
@@ -796,13 +796,13 @@ server {
     }
 }
 EOF
-        
-        systemctl restart nginx
-    fi
-    
-    log "SUCCESS" "Load balancing configuration completed"
-    
-    return 0
+
+		systemctl restart nginx
+	fi
+
+	log "SUCCESS" "Load balancing configuration completed"
+
+	return 0
 }
 
 # Main script execution
@@ -817,80 +817,80 @@ ENABLE_API=false
 ENABLE_LOAD_BALANCING=false
 
 # Check if no arguments provided
-if [ $# -eq 0 ]; then
-    usage
+if [[ $# -eq 0 ]]; then
+	usage
 fi
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
-    key="$1"
-    case $key in
-        --vault)
-            ENABLE_VAULT=true
-            shift
-            ;;
-        --monitoring)
-            ENABLE_MONITORING=true
-            shift
-            ;;
-        --logging)
-            ENABLE_LOGGING=true
-            shift
-            ;;
-        --ldap)
-            ENABLE_LDAP=true
-            shift
-            ;;
-        --api)
-            ENABLE_API=true
-            shift
-            ;;
-        --load-balancing)
-            ENABLE_LOAD_BALANCING=true
-            shift
-            ;;
-        --all)
-            ENABLE_VAULT=true
-            ENABLE_MONITORING=true
-            ENABLE_LOGGING=true
-            ENABLE_LDAP=true
-            ENABLE_API=true
-            ENABLE_LOAD_BALANCING=true
-            shift
-            ;;
-        -h|--help)
-            usage
-            ;;
-        *)
-            log "ERROR" "Unknown option: $1"
-            usage
-            ;;
-    esac
+	key="$1"
+	case ${key} in
+	--vault)
+		ENABLE_VAULT=true
+		shift
+		;;
+	--monitoring)
+		ENABLE_MONITORING=true
+		shift
+		;;
+	--logging)
+		ENABLE_LOGGING=true
+		shift
+		;;
+	--ldap)
+		ENABLE_LDAP=true
+		shift
+		;;
+	--api)
+		ENABLE_API=true
+		shift
+		;;
+	--load-balancing)
+		ENABLE_LOAD_BALANCING=true
+		shift
+		;;
+	--all)
+		ENABLE_VAULT=true
+		ENABLE_MONITORING=true
+		ENABLE_LOGGING=true
+		ENABLE_LDAP=true
+		ENABLE_API=true
+		ENABLE_LOAD_BALANCING=true
+		shift
+		;;
+	-h | --help)
+		usage
+		;;
+	*)
+		log "ERROR" "Unknown option: $1"
+		usage
+		;;
+	esac
 done
 
 # Execute selected features
-if [ "$ENABLE_VAULT" = true ]; then
-    configure_vault_integration
+if [[ ${ENABLE_VAULT} == true ]]; then
+	configure_vault_integration
 fi
 
-if [ "$ENABLE_MONITORING" = true ]; then
-    setup_prometheus_metrics
+if [[ ${ENABLE_MONITORING} == true ]]; then
+	setup_prometheus_metrics
 fi
 
-if [ "$ENABLE_LOGGING" = true ]; then
-    configure_elk_logging
+if [[ ${ENABLE_LOGGING} == true ]]; then
+	configure_elk_logging
 fi
 
-if [ "$ENABLE_LDAP" = true ]; then
-    configure_ldap_auth
+if [[ ${ENABLE_LDAP} == true ]]; then
+	configure_ldap_auth
 fi
 
-if [ "$ENABLE_API" = true ]; then
-    configure_api
+if [[ ${ENABLE_API} == true ]]; then
+	configure_api
 fi
 
-if [ "$ENABLE_LOAD_BALANCING" = true ]; then
-    configure_load_balancing
+if [[ ${ENABLE_LOAD_BALANCING} == true ]]; then
+	configure_load_balancing
 fi
 
 log "SUCCESS" "Enterprise setup completed"
