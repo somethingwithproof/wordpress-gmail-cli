@@ -12,10 +12,12 @@ Use this section to tell people about which versions of your project are current
 
 ## Reporting a Vulnerability
 
-We take the security of WordPress Gmail CLI seriously. If you believe you've found a security vulnerability, please follow these steps:
+We take the security of WordPress Gmail CLI seriously. If you believe you've found a
+security issue, please follow these steps:
 
 1. **Do not disclose the vulnerability publicly**
-2. **Email the details to security@example.com** (replace with your actual security contact)
+2. **Email the details to [security@example.com](mailto:security@example.com)**
+   (replace with your actual security contact)
 3. Include the following information:
    - Description of the vulnerability
    - Steps to reproduce
@@ -30,7 +32,8 @@ This project implements several security measures:
 
 - All code is linted and checked for security issues using automated tools
 - Dependencies are regularly updated and monitored for vulnerabilities
-- SLSA (Supply chain Levels for Software Artifacts) provenance is generated for all releases
+- SLSA (Supply chain Levels for Software Artifacts) provenance is generated
+  for all releases
 
 ### Authentication & Authorization
 

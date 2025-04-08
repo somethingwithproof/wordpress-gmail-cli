@@ -34,7 +34,7 @@ git clone https://github.com/yourusername/wordpress-gmail-cli.git
 cd wordpress-gmail-cli
 ```
 
-2. Make the script executable:
+1. Make the script executable:
 
 ```bash
 chmod +x wordpress-gmail-cli.sh
@@ -52,7 +52,7 @@ The script includes a helper utility to obtain the necessary Google API credenti
 ./get-gmail-credentials.sh
 ```
 
-2. Follow the prompts and instructions provided by the script.
+1. Follow the prompts and instructions provided by the script.
 
 ### Method 2: Manual Setup (Detailed Instructions)
 
@@ -102,9 +102,11 @@ If you prefer to set up the Google API credentials manually, follow these steps:
 #### Step 5: Get a Refresh Token
 
 1. Construct an authorization URL with your client ID:
-   ```
+
+   ```url
    https://accounts.google.com/o/oauth2/auth?client_id=YOUR_CLIENT_ID&redirect_uri=http://localhost:8080&response_type=code&scope=https://mail.google.com/&access_type=offline&prompt=consent
    ```
+
    Replace `YOUR_CLIENT_ID` with your actual client ID.
 
 2. Open this URL in your browser and authorize the application
@@ -116,17 +118,20 @@ If you prefer to set up the Google API credentials manually, follow these steps:
 5. Extract the authorization code from the URL (the value after `code=` and before any `&`)
 
 6. Exchange the authorization code for tokens using curl:
+
    ```bash
    curl --request POST \
      --url "https://oauth2.googleapis.com/token" \
      --header "Content-Type: application/x-www-form-urlencoded" \
      --data "client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET&code=YOUR_CODE&redirect_uri=http://localhost:8080&grant_type=authorization_code"
    ```
+
    Replace `YOUR_CLIENT_ID`, `YOUR_CLIENT_SECRET`, and `YOUR_CODE` with your actual values.
 
 7. From the response, extract the `refresh_token` value
 
 Now you have all the required credentials:
+
 - Client ID
 - Client Secret
 - Refresh Token
@@ -255,22 +260,27 @@ For more details on security practices, see the [SECURITY.md](SECURITY.md) file.
 For enterprise environments, additional enhancements are available in the `enterprise-enhancements.md` file. These include:
 
 ### Security Enhancements
+
 - HashiCorp Vault integration for secure credential management
 - Enhanced file permissions and SELinux context configuration
 
 ### Monitoring and Logging
+
 - Prometheus metrics endpoint for monitoring email delivery and token status
 - Centralized logging with ELK Stack integration
 
 ### Configuration Management
+
 - Ansible playbook for automated deployment across multiple servers
 - Docker containerization for consistent environments
 
 ### Multi-Server Support
+
 - Centralized credential management for server clusters
 - Load balancing configuration for high availability
 
 ### Enterprise Integration
+
 - LDAP authentication for admin interface
 - RESTful API for email status and management
 
