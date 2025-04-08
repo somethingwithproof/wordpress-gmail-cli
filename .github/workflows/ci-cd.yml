@@ -133,8 +133,20 @@ jobs:
       - name: Extract version from commit message
         id: version
         run: |
-          VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -oP 'release v\K[0-9]+\.[0-9]+\.[0-9]+')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          # Safely extract version using GitHub's built-in expression syntax
+          if [[ "${{ github.event.head_commit.message }}" =~ release\ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            VERSION="${BASH_REMATCH[1]}"
+            # Validate that VERSION is a valid semantic version
+            if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "version=$VERSION" >> $GITHUB_OUTPUT
+            else
+              echo "Invalid version format" >&2
+              exit 1
+            fi
+          else
+            echo "No version found in commit message" >&2
+            echo "version=0.0.0" >> $GITHUB_OUTPUT
+          fi
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
