@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@v2.0.0 # PINNED VERSION
+        uses: ludeeus/action-shellcheck@master
         with:
           # Only report actual errors (exit code != 0 from shellcheck)
           severity: error
@@ -95,12 +95,18 @@ jobs:
       #     coverage: none
       #     tools: none
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: none
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          # Add 'php' if desired, ensure Setup PHP step is included above
-          languages: 'javascript'
-          # config-file: ./.github/codeql/codeql-config.yml # Optional
+          languages: 'javascript,php'
+          config-file: ./.github/codeql/codeql-config.yml
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

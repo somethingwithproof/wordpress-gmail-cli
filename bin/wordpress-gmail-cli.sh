@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # wordpress-gmail-cli
-# Version: 1.1.0
+VERSION="1.1.0"
 # A CLI tool to configure WordPress and Postfix for sending outbound emails using Google API
 # Especially useful for Digital Ocean servers where standard SMTP ports are blocked
 
@@ -35,6 +35,7 @@ usage() {
 	echo "  --google-auth-secret SECRET Google OAuth Client Secret for login"
 	echo "  --facebook-app-id ID        Facebook App ID for login"
 	echo "  --facebook-app-secret SECRET Facebook App Secret for login"
+	echo "  -v, --version               Display version information"
 	echo "  -h, --help                  Display this help message"
 	echo
 	echo -e "${BOLD}Example:${RESET}"
