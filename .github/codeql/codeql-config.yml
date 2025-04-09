@@ -11,10 +11,10 @@ queries:
   - uses: security-extended
   # Add custom queries for PHP-specific security issues
   - name: PHP Security Queries
-    uses: wordpress-gmail-cli/php-security-queries
+    uses: ./.github/codeql/security-queries/php
   # Add custom queries for JavaScript-specific security issues
   - name: JavaScript Security Queries
-    uses: wordpress-gmail-cli/javascript-security-queries
+    uses: ./.github/codeql/security-queries/javascript
 
 # Define paths to exclude from analysis
 paths-ignore:
