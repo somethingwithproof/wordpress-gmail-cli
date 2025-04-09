@@ -50,7 +50,7 @@ test_docker_image() {
   
   # Test 1: Basic help command
   log "INFO" "Test 1: Running help command"
-  if ! docker run --rm "${image_name}" --help &> /dev/null; then
+  if ! docker run --rm "${image_name}" --help; then
     log "ERROR" "Help command test failed"
     return 1
   fi
@@ -58,7 +58,7 @@ test_docker_image() {
   
   # Test 2: Version information
   log "INFO" "Test 2: Checking version information"
-  if ! version=$(docker run --rm "${image_name}" --version 2>/dev/null); then
+  if ! version=$(docker run --rm "${image_name}" bin/version.sh 2>/dev/null); then
     log "ERROR" "Version command test failed"
     return 1
   fi
@@ -72,7 +72,7 @@ test_docker_image() {
   
   # Test 3: Check for expected files in the image
   log "INFO" "Test 3: Checking for expected files in the image"
-  if ! docker run --rm --entrypoint ls "${image_name}" /usr/local/bin/wordpress-gmail-cli.sh &> /dev/null; then
+  if ! docker run --rm --entrypoint ls "${image_name}" /app/bin/wordpress-gmail-cli.sh &> /dev/null; then
     log "ERROR" "Main script not found in the image"
     return 1
   fi
