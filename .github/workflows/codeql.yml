@@ -18,6 +18,7 @@ on:
   workflow_dispatch: # Allow manual trigger
 
 jobs:
+  # Define the analysis job with a key, e.g., 'analyze'
   analyze:
     name: Analyze (${{ matrix.language }})
     # ubuntu-latest is sufficient for PHP, JS, Actions.
@@ -53,53 +54,60 @@ jobs:
             build-mode: autobuild # Use autobuild for PHP
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
           # Full git history is needed for CodeQL to calculate changes accurately
           fetch-depth: 0
 
-    # Set up PHP environment only when analyzing PHP code
-    # This is crucial for CodeQL Autobuild or manual builds for PHP
-    - name: Setup PHP
-      if: matrix.language == 'php'
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.2' # Should match version in codeql-config.yml
-        coverage: none
-        tools: none
+      # Optional: If you explicitly need to install QL packs *before* init
+      # - name: Install CodeQL Packs (Optional - Usually handled by config)
+      #   run: codeql pack install <path-to-pack-or-qlx-file> # Adjust command as needed
+      #   # Ensure this runs *before* the 'Initialize CodeQL' step if used.
 
-    # Add any other setup steps (like Node.js) if required by custom build processes,
-    # although usually not needed for default JS/PHP analysis with autobuild/none.
+      # Set up PHP environment only when analyzing PHP code
+      # This is crucial for CodeQL Autobuild or manual builds for PHP
+      - name: Setup PHP
+        if: matrix.language == 'php'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2' # Should match version in codeql-config.yml
+          coverage: none
+          tools: none
 
-    # Initializes the CodeQL tools for scanning.
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: ${{ matrix.language }}
-        build-mode: ${{ matrix.build-mode }} # Use build-mode from matrix
-        # Reference the custom configuration file
-        config-file: ./.github/codeql/codeql-config.yml
+      # Add any other setup steps (like Node.js) if required by custom build processes,
+      # although usually not needed for default JS/PHP analysis with autobuild/none.
 
-    # Autobuild attempts to build any compiled languages (like PHP with dependencies).
-    # It runs only if build-mode is 'autobuild'. It's automatically handled
-    # by the init/analyze actions when build-mode is set appropriately.
-    # No separate Autobuild step is needed here as build-mode handles it.
+      # Initializes the CodeQL tools for scanning.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }} # Use build-mode from matrix
+          # Reference the custom configuration file
+          config-file: ./.github/codeql/codeql-config.yml
+          # If you need external packs, define them in the config-file
+          # or use the 'packs' input here (less common with advanced setup).
 
-    # The manual build step block is kept from the template.
-    # It will only run if you explicitly set build-mode: manual for a language.
-    # It will fail by default to remind you to add build commands.
-    - name: Manual build placeholder
-      if: matrix.build-mode == 'manual'
-      shell: bash
-      run: |
-        echo 'If you are using a "manual" build mode for one or more of the' \
-          'languages you are analyzing, replace this with the commands to build' \
-          'your code, for example:'
-        echo '  composer install --no-dev --optimize-autoloader' # Example PHP build step
-        exit 1 # Fail intentionally until customized
+      # Autobuild attempts to build any compiled languages (like PHP with dependencies).
+      # It runs only if build-mode is 'autobuild'. It's automatically handled
+      # by the init/analyze actions when build-mode is set appropriately.
+      # No separate Autobuild step is needed here as build-mode handles it.
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        category: "/language:${{ matrix.language }}" # Categorize results
+      # The manual build step block is kept from the template.
+      # It will only run if you explicitly set build-mode: manual for a language.
+      # It will fail by default to remind you to add build commands.
+      - name: Manual build placeholder
+        if: matrix.build-mode == 'manual'
+        shell: bash
+        run: |
+          echo 'If you are using a "manual" build mode for one or more of the' \
+            'languages you are analyzing, replace this with the commands to build' \
+            'your code, for example:'
+          echo '  composer install --no-dev --optimize-autoloader' # Example PHP build step
+          exit 1 # Fail intentionally until customized
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}" # Categorize results
