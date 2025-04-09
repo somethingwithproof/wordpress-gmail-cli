@@ -81,7 +81,7 @@ jobs:
 
       - name: Run PHP_CodeSniffer
         # Ensure paths match your project structure. Using a config file is recommended.
-        run: phpcs --standard=PSR12 src/ includes/ wp-social-auth.php
+        run: phpcs --standard=PSR12 wp-social-auth.php
 
       - name: Run PHPStan
         # Ensure paths match your project structure. Using a config file (phpstan.neon) is recommended.
