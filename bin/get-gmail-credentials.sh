@@ -2,32 +2,42 @@
 
 # Helper script to obtain Google API credentials for WordPress Gmail CLI
 
-# Function to display script usage
-usage() {
-    echo -e "${BOLD}Google API Credentials Helper${RESET}"
-    echo "This script will help you obtain the necessary credentials for the WordPress Gmail CLI"
-    echo
-    echo -e "${BOLD}Usage:${RESET}"
-    echo "  $0 [options]"
-    echo
-    echo -e "${BOLD}Options:${RESET}"
-    echo "  -h, --help                  Display this help message"
-    echo
-    exit 0
-}
-
-# Parse command line arguments
-if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
-    usage
-fi
-
-# Text formatting
+# Text formatting (ensure these are defined before use)
 BOLD="\033[1m"
 RED="\033[31m"
 GREEN="\033[32m"
 YELLOW="\033[33m"
 BLUE="\033[34m"
 RESET="\033[0m"
+
+# Function to display script usage
+usage() {
+	echo -e "${BOLD}Google API Credentials Helper${RESET}"
+	echo "This script will help you obtain the necessary credentials for the WordPress Gmail CLI"
+	echo
+	echo -e "${BOLD}Usage:${RESET}"
+	echo "  $0 [options]"
+	echo
+	echo -e "${BOLD}Options:${RESET}"
+	echo "  -h, --help                  Display this help message"
+	echo
+	exit 0
+}
+
+# Parse command line arguments
+if [[ "$1" = "--help" || "$1" = "-h" ]]; then
+	usage
+fi
+
+# Declare variables used later
+CLIENT_ID=""
+CLIENT_SECRET=""
+EMAIL=""
+STATE=""
+REDIRECT_URL=""
+CODE=""
+TOKEN_RESPONSE=""
+REFRESH_TOKEN=""
 
 echo -e "${BOLD}Google API Credentials Helper${RESET}"
 echo "This script will help you obtain the necessary credentials for the WordPress Gmail CLI"
@@ -49,19 +59,24 @@ echo "6. Click 'Create' and note your Client ID and Client Secret"
 echo
 
 echo -e "${BOLD}Step 3: Get a refresh token${RESET}"
-echo "Enter your Client ID:"
-read -r CLIENT_ID
+# Use read -r -p for prompt and input
+read -r -p "Enter your Client ID: " CLIENT_ID
+read -r -p "Enter your Client Secret: " CLIENT_SECRET
+read -r -p "Enter your Gmail address: " EMAIL
 
-echo "Enter your Client Secret:"
-read -r CLIENT_SECRET
-
-echo "Enter your Gmail address:"
-read -r EMAIL
+# Validate inputs (basic check)
+if [[ -z "${CLIENT_ID}" || -z "${CLIENT_SECRET}" || -z "${EMAIL}" ]]; then
+	echo -e "${RED}Client ID, Client Secret, and Email are required.${RESET}"
+	exit 1
+fi
 
 # Generate a random state value
-STATE=$(openssl rand -hex 12)
+if ! STATE=$(openssl rand -hex 12); then
+	echo -e "${RED}Failed to generate state value using openssl.${RESET}"
+	exit 1
+fi
 
-# Construct the authorization URL
+# Construct the authorization URL (ensure variables are quoted)
 AUTH_URL="https://accounts.google.com/o/oauth2/auth"
 AUTH_URL="${AUTH_URL}?client_id=${CLIENT_ID}"
 AUTH_URL="${AUTH_URL}&redirect_uri=http://localhost:8080"
@@ -76,29 +91,44 @@ echo -e "\n${BOLD}Please open the following URL in your browser:${RESET}"
 echo -e "${BLUE}${AUTH_URL}${RESET}"
 echo
 
-echo "After you authorize the application, you will be redirected to localhost:8080 with a code parameter."
-echo "Copy the entire URL from your browser and paste it here:"
-read -r REDIRECT_URL
+read -r -p "After authorizing, paste the FULL redirect URL from your browser here: " REDIRECT_URL
 
-# Extract the authorization code from the redirect URL
-CODE=$(echo "${REDIRECT_URL}" | grep -oP 'code=\K[^&]+')
+# Extract the authorization code from the redirect URL more safely
+if ! CODE=$(echo "${REDIRECT_URL}" | grep -o 'code=[^&]*' | cut -d= -f2); then
+	echo -e "${RED}Could not parse authorization code from the URL.${RESET}"
+	exit 1
+fi
 
-if [[ -z ${CODE} ]]; then
-	echo -e "${RED}Failed to extract authorization code from the URL${RESET}"
+if [[ -z "${CODE}" ]]; then
+	echo -e "${RED}Authorization code is empty. Please check the pasted URL.${RESET}"
 	exit 1
 fi
 
 # Exchange the authorization code for tokens
-TOKEN_RESPONSE=$(curl -s --request POST \
+# Check curl exit status
+if ! TOKEN_RESPONSE=$(curl -s --request POST \
 	--url "https://oauth2.googleapis.com/token" \
 	--header "Content-Type: application/x-www-form-urlencoded" \
-	--data "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&code=${CODE}&redirect_uri=http://localhost:8080&grant_type=authorization_code")
+	--data-urlencode "client_id=${CLIENT_ID}" \
+	--data-urlencode "client_secret=${CLIENT_SECRET}" \
+	--data-urlencode "code=${CODE}" \
+	--data-urlencode "redirect_uri=http://localhost:8080" \
+	--data-urlencode "grant_type=authorization_code"); then
+	echo -e "${RED}curl command failed to get token (Exit code: $?).${RESET}"
+	exit 1
+fi
 
-# Extract the refresh token
-REFRESH_TOKEN=$(echo "${TOKEN_RESPONSE}" | grep -oP '"refresh_token":"\K[^"]+')
+# Extract the refresh token more safely using grep and check status
+# shellcheck disable=SC2143 # Grep check is intentional
+if ! REFRESH_TOKEN=$(echo "${TOKEN_RESPONSE}" | grep -o '"refresh_token":"[^"]*' | grep -o '[^"]*$'); then
+	# Check if grep failed or token wasn't found
+	echo -e "${RED}Failed to obtain refresh token. Check API response.${RESET}"
+	echo "Response: ${TOKEN_RESPONSE}"
+	exit 1
+fi
 
-if [[ -z ${REFRESH_TOKEN} ]]; then
-	echo -e "${RED}Failed to obtain refresh token${RESET}"
+if [[ -z "${REFRESH_TOKEN}" ]]; then
+	echo -e "${RED}Refresh token is empty in the API response.${RESET}"
 	echo "Response: ${TOKEN_RESPONSE}"
 	exit 1
 fi
@@ -106,10 +136,12 @@ fi
 echo -e "\n${GREEN}Successfully obtained credentials!${RESET}"
 echo
 echo -e "${BOLD}Your Google API credentials:${RESET}"
+# Ensure variables are quoted in output
 echo -e "Client ID: ${BLUE}${CLIENT_ID}${RESET}"
 echo -e "Client Secret: ${BLUE}${CLIENT_SECRET}${RESET}"
 echo -e "Refresh Token: ${BLUE}${REFRESH_TOKEN}${RESET}"
 echo -e "Email: ${BLUE}${EMAIL}${RESET}"
 echo
 echo -e "${BOLD}Use these credentials with the WordPress Gmail CLI:${RESET}"
-echo -e "${YELLOW}./wordpress-gmail-cli.sh --email ${EMAIL} --client-id ${CLIENT_ID} --client-secret ${CLIENT_SECRET} --refresh-token ${REFRESH_TOKEN} --domain your-domain.com${RESET}"
+# Quote arguments for the example command
+echo -e "${YELLOW}./wordpress-gmail-cli.sh --email \"${EMAIL}\" --client-id \"${CLIENT_ID}\" --client-secret \"${CLIENT_SECRET}\" --refresh-token \"${REFRESH_TOKEN}\" --domain \"your-domain.com\"${RESET}"
