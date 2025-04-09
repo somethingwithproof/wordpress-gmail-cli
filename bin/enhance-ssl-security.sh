@@ -24,7 +24,7 @@ usage() {
   echo "  $0 [options]"
   echo
   echo -e "${BOLD}Options:${RESET}"
-  echo "  -d, --domain DOMAIN         Your website domain (e.g., example.com)"
+  echo "  -d, --domain DOMAIN         Your website domain (e.g. example.com)"
   echo "  -w, --wp-path PATH          Path to WordPress installation (default: /var/www/html)"
   echo "  -c, --cert-path PATH        Path to SSL certificate directory (default: /etc/letsencrypt/live/DOMAIN)"
   echo "  -a, --apache                Configure for Apache (default if detected)"
