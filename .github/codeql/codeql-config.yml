@@ -1,27 +1,27 @@
 name: Custom CodeQL Configuration
 
-# Disable default queries to use our custom ones
+# Disable default queries to use our custom ones alongside standard suites
 disable-default-queries: true
 
 # Define query suites to run
 queries:
-  # Run all security and quality queries
+  # Run standard security and quality queries
   - uses: security-and-quality
-  # Add security-extended queries for more comprehensive analysis
+  # Add standard security-extended queries for more comprehensive analysis
   - uses: security-extended
   # Add custom queries for PHP-specific security issues
   - name: PHP Security Queries
     uses: ./.github/codeql/security-queries/php
   # Add custom queries for JavaScript-specific security issues
   - name: JavaScript Security Queries
-    uses: ./.github/codeql/security-queries/javascript
+    uses: ./.github/codeql/security-queries/javascript # Ensure this path is correct
 
 # Define paths to exclude from analysis
 paths-ignore:
   # Dependency directories
   - '**/node_modules/**'
   - '**/vendor/**'
-  # Test files
+  # Test files (can be refined if necessary)
   - '**/*.test.js'
   - '**/*.spec.js'
   - '**/*Test.php'
@@ -33,13 +33,14 @@ paths-ignore:
   - '**/*.txt'
   - '**/docs/**'
 
-# Define paths to include in analysis
+# Define paths to include in analysis (optional, CodeQL scans all non-ignored by default)
+# If specified, ONLY these paths (respecting paths-ignore) are scanned.
 paths:
   # Shell scripts
   - bin
-  # PHP files
+  # Specific PHP file entrypoint
   - wp-social-auth.php
-  # JavaScript files
+  # All JavaScript files (respecting paths-ignore)
   - '**/*.js'
   # Configuration files
   - '**/*.json'
@@ -50,7 +51,7 @@ paths:
 languages:
   # JavaScript configuration
   - name: javascript
-    # Specify patterns for test files
+    # Specify patterns for test files (used by some metrics/queries)
     test-patterns:
       - '**/*.test.js'
       - '**/*.spec.js'
@@ -62,27 +63,29 @@ languages:
 
   # PHP configuration
   - name: php
-    # Specify patterns for test files
+    # Specify patterns for test files (used by some metrics/queries)
     test-patterns:
       - '**/*Test.php'
-    # Configure indexing
+    # Configure indexing (fine-tune source file discovery)
     index:
+      # Explicitly include all .php files (usually default, but can be specific)
       include:
         - '**/*.php'
+      # Explicitly exclude vendor/tests (already covered by paths-ignore, but good practice)
       exclude:
         - '**/vendor/**'
         - '**/tests/**'
     # Configure extraction
     extraction:
-      # Specify PHP version
+      # Specify PHP version (should match version in Setup PHP step)
       php:
         version: '8.2'
-        # Include standard PHP libraries
+        # Include standard PHP libraries for better analysis
         standard_library: true
 
 # Database configuration
 database:
   # Optimize database for better performance
   optimize: true
-  # Set maximum database size
-  max-disk-space: 1024
+  # Set maximum database size (e.g., 1GB)
+  max-disk-space: 1024 # In MB
