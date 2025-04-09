@@ -23,12 +23,15 @@ RUN apk add --no-cache \
 # Set up working directory
 WORKDIR /app
 
+# Create bin directory
+RUN mkdir -p /app/bin
+
 # Copy scripts
-COPY bin/*.sh /app/
+COPY bin/*.sh /app/bin/
 COPY wp-social-auth.php /app/
 
 # Make scripts executable and set proper permissions
-RUN chmod +x /app/*.sh && \
+RUN chmod +x /app/bin/*.sh && \
     chown -R root:root /app && \
     chmod -R 755 /app
 
@@ -38,8 +41,8 @@ USER appuser
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD sh -c "/app/wordpress-gmail-cli.sh --help > /dev/null || exit 1"
+  CMD sh -c "/app/bin/wordpress-gmail-cli.sh --help > /dev/null || exit 1"
 
 # Set up entrypoint
-ENTRYPOINT ["/app/wordpress-gmail-cli.sh"]
+ENTRYPOINT ["/app/bin/wordpress-gmail-cli.sh"]
 CMD ["--help"]

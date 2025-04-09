@@ -67,7 +67,7 @@ jobs:
           tools: none        # No extra tools needed just for CodeQL scan
 
       - name: Run ShellCheck (informational only)
-        uses: ludeeus/action-shellcheck@v2.0.0 # Pin to a specific version
+        uses: ludeeus/action-shellcheck@master # Use master branch
         continue-on-error: true
         with:
           check_together: 'yes' # Optional: Report all files together
