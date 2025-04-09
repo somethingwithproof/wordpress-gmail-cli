@@ -105,7 +105,7 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: 'javascript,php'
+          languages: 'javascript'
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Perform CodeQL Analysis
