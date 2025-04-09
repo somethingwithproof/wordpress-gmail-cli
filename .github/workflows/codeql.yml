@@ -20,8 +20,8 @@ on:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    # For JS/PHP only, 'ubuntu-latest' is sufficient.
-    # The dynamic runner is only needed if you add Swift or other macOS-specific languages.
+    # ubuntu-latest is sufficient for PHP, JS, Actions.
+    # The dynamic runner logic is kept in case you add Swift later.
     runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
     timeout-minutes: 60 # Prevent workflow from running too long
 
@@ -42,13 +42,15 @@ jobs:
         include:
           # Analyze GitHub Actions Workflows (optional)
           - language: actions
-            build-mode: none
+            build-mode: none # Build mode not applicable
 
           # Analyze JavaScript (use 'javascript-typescript' for TS)
           - language: javascript
             build-mode: none # Build mode not applicable
 
-          # PHP analysis removed as there's not enough PHP code to analyze
+          # Analyze PHP code
+          - language: php
+            build-mode: autobuild # Use autobuild for PHP
 
     steps:
     - name: Checkout repository
@@ -58,17 +60,17 @@ jobs:
           fetch-depth: 0
 
     # Set up PHP environment only when analyzing PHP code
-    # This is crucial for CodeQL to find the PHP executable
+    # This is crucial for CodeQL Autobuild or manual builds for PHP
     - name: Setup PHP
       if: matrix.language == 'php'
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.2' # Or your project's required version
+        php-version: '8.2' # Should match version in codeql-config.yml
         coverage: none
         tools: none
 
     # Add any other setup steps (like Node.js) if required by custom build processes,
-    # although usually not needed for default JS/PHP analysis.
+    # although usually not needed for default JS/PHP analysis with autobuild/none.
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -76,7 +78,13 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }} # Use build-mode from matrix
+        # Reference the custom configuration file
         config-file: ./.github/codeql/codeql-config.yml
+
+    # Autobuild attempts to build any compiled languages (like PHP with dependencies).
+    # It runs only if build-mode is 'autobuild'. It's automatically handled
+    # by the init/analyze actions when build-mode is set appropriately.
+    # No separate Autobuild step is needed here as build-mode handles it.
 
     # The manual build step block is kept from the template.
     # It will only run if you explicitly set build-mode: manual for a language.
@@ -88,11 +96,8 @@ jobs:
         echo 'If you are using a "manual" build mode for one or more of the' \
           'languages you are analyzing, replace this with the commands to build' \
           'your code, for example:'
-        echo '  make bootstrap'
-        echo '  make release'
-        exit 1 # Fail intentionally
-
-    # Autobuild step is NOT used here because build-mode controls the process.
+        echo '  composer install --no-dev --optimize-autoloader' # Example PHP build step
+        exit 1 # Fail intentionally until customized
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
