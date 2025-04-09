@@ -48,9 +48,7 @@ jobs:
           - language: javascript
             build-mode: none # Build mode not applicable
 
-          # Analyze PHP
-          - language: php
-            build-mode: none # Build mode not applicable
+          # PHP analysis removed as there's not enough PHP code to analyze
 
     steps:
     - name: Checkout repository
