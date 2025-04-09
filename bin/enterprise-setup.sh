@@ -63,7 +63,7 @@ usage() {
 	echo
 	echo -e "${BOLD}Example:${RESET}"
 	echo "  $0 --vault --monitoring"
-	exit 1
+	exit 0
 }
 
 # Function to configure Vault integration

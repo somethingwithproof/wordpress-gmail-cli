@@ -2,6 +2,25 @@
 
 # Helper script to obtain Google API credentials for WordPress Gmail CLI
 
+# Function to display script usage
+usage() {
+    echo -e "${BOLD}Google API Credentials Helper${RESET}"
+    echo "This script will help you obtain the necessary credentials for the WordPress Gmail CLI"
+    echo
+    echo -e "${BOLD}Usage:${RESET}"
+    echo "  $0 [options]"
+    echo
+    echo -e "${BOLD}Options:${RESET}"
+    echo "  -h, --help                  Display this help message"
+    echo
+    exit 0
+}
+
+# Parse command line arguments
+if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+    usage
+fi
+
 # Text formatting
 BOLD="\033[1m"
 RED="\033[31m"

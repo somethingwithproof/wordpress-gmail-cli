@@ -33,7 +33,7 @@ usage() {
 	echo
 	echo -e "${BOLD}Example:${RESET}"
 	echo "  $0 --domain example.com --wp-path /var/www/html"
-	exit 1
+	exit 0
 }
 
 # Function to log messages
