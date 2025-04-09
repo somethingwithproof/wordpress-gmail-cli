@@ -74,9 +74,11 @@ jobs:
 
       - name: Extract version from commit message
         id: version
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           # Extract version X.Y.Z from commit message like "chore: release vX.Y.Z ..."
-          if [[ "${{ github.event.head_commit.message }}" =~ chore:\ release\ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+          if [[ "$COMMIT_MESSAGE" =~ chore:\ release\ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
             VERSION="${BASH_REMATCH[1]}"
             # Basic validation
             if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -88,9 +90,8 @@ jobs:
             fi
           else
             echo "Error: Commit message does not contain 'chore: release vX.Y.Z'." >&2
-            echo "Commit message was: ${{ github.event.head_commit.message }}" >&2
+            echo "Commit message was: $COMMIT_MESSAGE" >&2
             exit 1 # Fail if version not found
-          fi
 
       - name: Build and push Docker image to GHCR
         uses: docker/build-push-action@v5
