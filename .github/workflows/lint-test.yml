@@ -1,3 +1,4 @@
+# .github/workflows/ci.yml
 name: CI
 
 on:
@@ -5,67 +6,134 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
+  workflow_dispatch: # Allows manual triggering
 
-# Default permissions are read-only
-permissions: read-all
+# Concurrency control: Cancel previous runs on the same branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+# Default permissions are read-only - good security practice
+permissions:
+  contents: read
 
 jobs:
   lint-shell:
     name: Lint Shell Scripts
     runs-on: ubuntu-latest
+    # Define permissions needed specifically for this job
     permissions:
-      contents: read        # To checkout and read files
-      pull-requests: write # OPTIONAL: To allow shfmt action to comment on PRs
+      contents: read          # To checkout and read files
+      pull-requests: write   # OPTIONAL: To allow shfmt action to comment on PRs (if sh_checker_comment is true)
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@master
+        # Pin to a specific version for stability (check for latest stable release)
+        uses: ludeeus/action-shellcheck@v2.0.0
         with:
           # Consider 'warning' or 'error' if 'style' is too noisy
           severity: style
+        env:
+          # Optional: Set SHELLCHECK_OPTS if needed, e.g., to exclude specific checks
+          # SHELLCHECK_OPTS: "-e SC2034"
+          SHELLCHECK_OPTS: '' # Ensures env var exists even if empty
 
       - name: Run shfmt for formatting check
-        uses: luizm/action-sh-checker@v0.5.0
+        uses: luizm/action-sh-checker@v0.5.0 # Pinned version is good
         env:
           SHFMT_OPTS: -i 2 -ci -bn # Indent 2, simplify case, binary ops follow
         with:
-          # Set to false if PR comments are not needed or permission is not granted
+          # Set to false if PR comments are not needed or pull-requests: write permission is removed
           sh_checker_comment: true
-          sh_checker_exclude: vendor # Exclude vendor directory
+          sh_checker_exclude: vendor # Exclude vendor directory (adjust if needed)
+          # Optional: Specify file patterns if not all shell scripts should be checked
+          # sh_checker_sh_path: '**/*.sh'
 
   lint-php:
     name: Lint PHP Files
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read # Only need read permission here
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        # Pin to a specific minor version for stability (check for latest stable v2 release)
+        uses: shivammathur/setup-php@v2 # Using v2 is generally okay, but v2.x.y is safer
         with:
           php-version: '8.2'
           tools: phpcs, phpstan, php-cs-fixer
+          # Optional: Add extensions if needed by your linters/code
+          # extensions: mbstring, xml, ...
+          coverage: none # Explicitly disable coverage setup if not needed
+
+      # Optional: Add step to install Composer dependencies if linters depend on them
+      # or if phpstan needs vendor autoloading
+      # - name: Install Composer Dependencies
+      #   run: composer install --prefer-dist --no-progress --no-suggest
+
+      # Suggestion: Use configuration files (phpcs.xml, phpstan.neon, .php-cs-fixer.dist.php)
+      # for more complex rulesets instead of CLI flags/paths.
 
       - name: Run PHP_CodeSniffer
-        # Adjust paths to your PHP source directories (e.g., src/ .)
+        # Ensure paths match your project structure. Using a config file is recommended.
         run: phpcs --standard=PSR12 src/ includes/ wp-social-auth.php
 
       - name: Run PHPStan
-        # Adjust paths to your PHP source directories (e.g., src/ .)
+        # Ensure paths match your project structure. Using a config file (phpstan.neon) is recommended.
+        # Consider adding --memory-limit if you encounter memory issues.
         run: phpstan analyse src/ includes/ wp-social-auth.php --level=5
 
       - name: Run PHP-CS-Fixer (Dry Run)
-        # Adjust paths to your PHP source directories (e.g., src/ .)
-        run: php-cs-fixer fix src/ includes/ wp-social-auth.php --dry-run --diff
+        # Ensure paths match your project structure. Using a config file (.php-cs-fixer.dist.php) is recommended.
+        run: php-cs-fixer fix src/ includes/ wp-social-auth.php --dry-run --diff --config=.php-cs-fixer.dist.php # Example using config
 
-  # OPTIONAL: Add 'needs' if you want linting to finish before testing starts
-  # needs: [lint-shell, lint-php]
+  # This job depends on the linting jobs passing successfully.
   test-docker:
     name: Test Docker Build
-    runs-on: ubuntu
+    runs-on: ubuntu-latest
+    # Ensure linting passes before attempting the build
+    needs: [lint-shell, lint-php]
+    permissions:
+      contents: read # Only needs read access to checkout code for build context
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Optional: Set up Docker Buildx for advanced features like multi-platform builds
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v3
+
+      # Optional: Add Docker layer caching to speed up builds
+      # - name: Cache Docker layers
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: /tmp/.buildx-cache
+      #     key: ${{ runner.os }}-buildx-${{ github.sha }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-buildx-
+
+      - name: Build Docker image
+        # Replace 'Dockerfile' and '.' with your actual Dockerfile path and build context if different.
+        # Add --tag if you want to tag the image.
+        run: docker build --file Dockerfile .
+        # Example using Buildx with cache:
+        # uses: docker/build-push-action@v5
+        # with:
+        #   context: .
+        #   file: ./Dockerfile
+        #   push: false # Don't push image in a test job
+        #   tags: user/app:latest # Optional tag
+        #   cache-from: type=local,src=/tmp/.buildx-cache
+        #   cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+      
+      # Optional: Move cache if using actions/cache + Buildx local cache
+      # This is needed because the cache action saves/restores based on the `path` provided.
+      # - name: Move cache
+      #   run: |
+      #     rm -rf /
