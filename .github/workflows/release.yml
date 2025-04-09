@@ -2,9 +2,18 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+    tags:
+      - 'v*'
     paths:
       - CHANGELOG.md
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.2.3)'
+        required: true
+        type: string
 
 # Default permissions are read-only
 permissions: read-all
@@ -16,72 +25,72 @@ jobs:
     permissions:
       contents: write
       packages: write
+      id-token: write # For SLSA provenance
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check for release commit
-        id: check_release
-        env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+      - name: Determine version
+        id: version
         run: |
-          # Use a safer pattern matching approach
-          if [[ "$COMMIT_MESSAGE" =~ chore:\ release ]]; then
-            echo "is_release=true" >> $GITHUB_OUTPUT
+          # Check if triggered by workflow_dispatch with version input
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+            echo "Source: Manual workflow dispatch"
+          # Check if triggered by tag
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
+            echo "Source: Tag push"
+          # Check if triggered by commit message
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+            if [[ "$COMMIT_MESSAGE" =~ chore:\ release\ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+              VERSION="${BASH_REMATCH[1]}"
+              echo "Source: Commit message"
+            else
+              echo "Error: No version found in commit message" >&2
+              exit 1
+            fi
           else
-            echo "is_release=false" >> $GITHUB_OUTPUT
+            echo "Error: Could not determine version" >&2
+            exit 1
           fi
+          
+          # Validate version format
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Invalid version format: $VERSION" >&2
+            exit 1
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version to release: $VERSION"
 
       - name: Set up Docker Buildx
-        if: steps.check_release.outputs.is_release == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GitHub Container Registry
-        if: steps.check_release.outputs.is_release == 'true'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract version from commit message
-        if: steps.check_release.outputs.is_release == 'true'
-        id: version
-        env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        run: |
-          # Safely extract version using bash regex
-          if [[ "$COMMIT_MESSAGE" =~ release\ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
-            VERSION="${BASH_REMATCH[1]}"
-            # Validate that VERSION is a valid semantic version
-            if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              echo "version=$VERSION" >> $GITHUB_OUTPUT
-            else
-              echo "Invalid version format" >&2
-              exit 1
-            fi
-          else
-            echo "No version found in commit message" >&2
-            echo "version=0.0.0" >> $GITHUB_OUTPUT
-          fi
-
       - name: Build and push Docker image
-        if: steps.check_release.outputs.is_release == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/wordpress-gmail-cli:latest
-            ghcr.io/${{ github.repository_owner }}/wordpress-gmail-cli:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Create GitHub Release
-        if: steps.check_release.outputs.is_release == 'true'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: Release v${{ steps.version.outputs.version }}
@@ -91,3 +100,33 @@ jobs:
             wp-social-auth.php
             bin/enhance-ssl-security.sh
             bin/get-gmail-credentials.sh
+
+  # Artifact generation and upload
+  artifacts:
+    name: Generate Artifacts
+    needs: [release]
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Build artifacts
+        run: |
+          mkdir -p dist
+          cp bin/*.sh dist/
+          cp wp-social-auth.php dist/
+          
+      - name: Generate hashes
+        run: |
+          cd dist
+          sha256sum * > ../sha256sums.txt
+          
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: wordpress-gmail-cli
+          path: |
+            dist/
+            sha256sums.txt
