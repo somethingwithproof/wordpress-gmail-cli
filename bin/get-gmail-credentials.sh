@@ -12,21 +12,21 @@ RESET="\033[0m"
 
 # Function to display script usage
 usage() {
-	echo -e "${BOLD}Google API Credentials Helper${RESET}"
-	echo "This script will help you obtain the necessary credentials for the WordPress Gmail CLI"
-	echo
-	echo -e "${BOLD}Usage:${RESET}"
-	echo "  $0 [options]"
-	echo
-	echo -e "${BOLD}Options:${RESET}"
-	echo "  -h, --help                  Display this help message"
-	echo
-	exit 0
+  echo -e "${BOLD}Google API Credentials Helper${RESET}"
+  echo "This script will help you obtain the necessary credentials for the WordPress Gmail CLI"
+  echo
+  echo -e "${BOLD}Usage:${RESET}"
+  echo "  $0 [options]"
+  echo
+  echo -e "${BOLD}Options:${RESET}"
+  echo "  -h, --help                  Display this help message"
+  echo
+  exit 0
 }
 
 # Parse command line arguments
 if [[ "$1" = "--help" || "$1" = "-h" ]]; then
-	usage
+  usage
 fi
 
 # Declare variables used later
@@ -66,14 +66,14 @@ read -r -p "Enter your Gmail address: " EMAIL
 
 # Validate inputs (basic check)
 if [[ -z "${CLIENT_ID}" || -z "${CLIENT_SECRET}" || -z "${EMAIL}" ]]; then
-	echo -e "${RED}Client ID, Client Secret, and Email are required.${RESET}"
-	exit 1
+  echo -e "${RED}Client ID, Client Secret, and Email are required.${RESET}"
+  exit 1
 fi
 
 # Generate a random state value
 if ! STATE=$(openssl rand -hex 12); then
-	echo -e "${RED}Failed to generate state value using openssl.${RESET}"
-	exit 1
+  echo -e "${RED}Failed to generate state value using openssl.${RESET}"
+  exit 1
 fi
 
 # Construct the authorization URL (ensure variables are quoted)
@@ -95,42 +95,42 @@ read -r -p "After authorizing, paste the FULL redirect URL from your browser her
 
 # Extract the authorization code from the redirect URL more safely
 if ! CODE=$(echo "${REDIRECT_URL}" | grep -o 'code=[^&]*' | cut -d= -f2); then
-	echo -e "${RED}Could not parse authorization code from the URL.${RESET}"
-	exit 1
+  echo -e "${RED}Could not parse authorization code from the URL.${RESET}"
+  exit 1
 fi
 
 if [[ -z "${CODE}" ]]; then
-	echo -e "${RED}Authorization code is empty. Please check the pasted URL.${RESET}"
-	exit 1
+  echo -e "${RED}Authorization code is empty. Please check the pasted URL.${RESET}"
+  exit 1
 fi
 
 # Exchange the authorization code for tokens
 # Check curl exit status
 if ! TOKEN_RESPONSE=$(curl -s --request POST \
-	--url "https://oauth2.googleapis.com/token" \
-	--header "Content-Type: application/x-www-form-urlencoded" \
-	--data-urlencode "client_id=${CLIENT_ID}" \
-	--data-urlencode "client_secret=${CLIENT_SECRET}" \
-	--data-urlencode "code=${CODE}" \
-	--data-urlencode "redirect_uri=http://localhost:8080" \
-	--data-urlencode "grant_type=authorization_code"); then
-	echo -e "${RED}curl command failed to get token (Exit code: $?).${RESET}"
-	exit 1
+  --url "https://oauth2.googleapis.com/token" \
+  --header "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "client_secret=${CLIENT_SECRET}" \
+  --data-urlencode "code=${CODE}" \
+  --data-urlencode "redirect_uri=http://localhost:8080" \
+  --data-urlencode "grant_type=authorization_code"); then
+  echo -e "${RED}curl command failed to get token (Exit code: $?).${RESET}"
+  exit 1
 fi
 
 # Extract the refresh token more safely using grep and check status
 # shellcheck disable=SC2143 # Grep check is intentional
 if ! REFRESH_TOKEN=$(echo "${TOKEN_RESPONSE}" | grep -o '"refresh_token":"[^"]*' | grep -o '[^"]*$'); then
-	# Check if grep failed or token wasn't found
-	echo -e "${RED}Failed to obtain refresh token. Check API response.${RESET}"
-	echo "Response: ${TOKEN_RESPONSE}"
-	exit 1
+  # Check if grep failed or token wasn't found
+  echo -e "${RED}Failed to obtain refresh token. Check API response.${RESET}"
+  echo "Response: ${TOKEN_RESPONSE}"
+  exit 1
 fi
 
 if [[ -z "${REFRESH_TOKEN}" ]]; then
-	echo -e "${RED}Refresh token is empty in the API response.${RESET}"
-	echo "Response: ${TOKEN_RESPONSE}"
-	exit 1
+  echo -e "${RED}Refresh token is empty in the API response.${RESET}"
+  echo "Response: ${TOKEN_RESPONSE}"
+  exit 1
 fi
 
 echo -e "\n${GREEN}Successfully obtained credentials!${RESET}"

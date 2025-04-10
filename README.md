@@ -1,9 +1,8 @@
 # WordPress Gmail CLI
 
-[![CI/CD Pipeline](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/ci-cd-pipeline.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/ci-cd-pipeline.yml)
+[![CI](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/ci.yml)
 [![Security Scan](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/security-scan.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/security-scan.yml)
-[![CodeQL](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/codeql-analysis.yml)
-[![Docker Build](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/docker-build.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/docker-build.yml)
+[![CodeQL](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/codeql.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/codeql.yml)
 [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
 
 A simple CLI tool to quickly configure WordPress and Postfix for sending outbound emails using Google API. Ideal for automating reliable email delivery setup on your WordPress server, especially on platforms like Digital Ocean that block standard SMTP ports.
@@ -34,10 +33,10 @@ git clone https://github.com/yourusername/wordpress-gmail-cli.git
 cd wordpress-gmail-cli
 ```
 
-1. Make the script executable:
+2. Make the script executable:
 
 ```bash
-chmod +x wordpress-gmail-cli.sh
+chmod +x bin/wordpress-gmail-cli.sh
 ```
 
 ## Getting Google API Credentials
@@ -49,10 +48,10 @@ The script includes a helper utility to obtain the necessary Google API credenti
 1. Run the helper script:
 
 ```bash
-./get-gmail-credentials.sh
+./bin/get-gmail-credentials.sh
 ```
 
-1. Follow the prompts and instructions provided by the script.
+2. Follow the prompts and instructions provided by the script.
 
 ### Method 2: Manual Setup (Detailed Instructions)
 
@@ -123,7 +122,7 @@ If you prefer to set up the Google API credentials manually, follow these steps:
    curl --request POST \
      --url "https://oauth2.googleapis.com/token" \
      --header "Content-Type: application/x-www-form-urlencoded" \
-     --data "client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET&code=YOUR_CODE&redirect_uri=http://localhost:8080&grant_type=authorization_code"
+     --data-urlencode "client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET&code=YOUR_CODE&redirect_uri=http://localhost:8080&grant_type=authorization_code"
    ```
 
    Replace `YOUR_CLIENT_ID`, `YOUR_CLIENT_SECRET`, and `YOUR_CODE` with your actual values.
@@ -142,7 +141,7 @@ Now you have all the required credentials:
 Run the script with the required parameters:
 
 ```bash
-sudo ./wordpress-gmail-cli.sh --email your-email@gmail.com --client-id your-client-id --client-secret your-client-secret --refresh-token your-refresh-token --domain example.com
+sudo ./bin/wordpress-gmail-cli.sh --email your-email@gmail.com --client-id your-client-id --client-secret your-client-secret --refresh-token your-refresh-token --domain example.com
 ```
 
 ### Parameters
@@ -224,7 +223,7 @@ For local development and testing, use Docker Compose:
 docker-compose up -d
 
 # Run the CLI tool within the environment
-docker-compose exec cli ./wordpress-gmail-cli.sh --help
+docker-compose exec cli ./bin/wordpress-gmail-cli.sh --help
 
 # Access WordPress at http://localhost:8080
 # Access phpMyAdmin at http://localhost:8081
@@ -257,7 +256,7 @@ For more details on security practices, see the [SECURITY.md](SECURITY.md) file.
 
 ## Enterprise Enhancements
 
-For enterprise environments, additional enhancements are available in the `enterprise-enhancements.md` file. These include:
+For enterprise environments, additional enhancements are available in the `enterprise-enhancements.md` file and implemented in `bin/enterprise-setup.sh`. These include:
 
 ### Security Enhancements
 
@@ -284,4 +283,4 @@ For enterprise environments, additional enhancements are available in the `enter
 - LDAP authentication for admin interface
 - RESTful API for email status and management
 
-To implement these enterprise features, refer to the code samples and instructions in `enterprise-enhancements.md`.
+To implement these enterprise features, refer to the code samples and instructions in `enterprise-enhancements.md` or use the `bin/enterprise-setup.sh` script with appropriate options.
