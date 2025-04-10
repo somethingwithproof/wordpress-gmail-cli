@@ -271,7 +271,7 @@ EOF
 
   # Modify token refresh script to log to a file
   if [[ -f /etc/postfix/gmail-api/refresh-token.sh ]]; then
-# shellcheck disable=SC2016 # Variable will be expanded by sed at runtime
+    # shellcheck disable=SC2016 # Variable will be expanded by sed at runtime
     sed -i 's|echo "Access token refreshed successfully (expires in \${EXPIRES_IN}s)"|echo "$(date): Access token refreshed successfully (expires in \${EXPIRES_IN}s)" >> /etc/postfix/gmail-api/token-refresh.log|g' /etc/postfix/gmail-api/refresh-token.sh
   else
     log "WARNING" "Token refresh script not found. Logging configuration may be incomplete."
