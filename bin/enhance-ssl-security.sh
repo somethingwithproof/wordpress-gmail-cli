@@ -43,11 +43,11 @@ log() {
   local color="$RESET"
 
   case "$level" in
-    INFO) color="$BLUE";;
-    SUCCESS) color="$GREEN";;
-    WARNING) color="$YELLOW";;
-    ERROR) color="$RED";;
-    *) color="$RESET";;
+    INFO) color="$BLUE" ;;
+    SUCCESS) color="$GREEN" ;;
+    WARNING) color="$YELLOW" ;;
+    ERROR) color="$RED" ;;
+    *) color="$RESET" ;;
   esac
 
   echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${color}${level}${RESET}: ${message}"
@@ -84,26 +84,36 @@ WEB_SERVER=""
 while [[ $# -gt 0 ]]; do
   key="$1"
   case ${key} in
-    -d|--domain)
+    -d | --domain)
       DOMAIN="$2"
-      shift; shift;;
-    -w|--wp-path)
-      WP_PATH="$2"
-      shift; shift;;
-    -c|--cert-path)
+      shift
+      shift
+      ;;
+    -w | --wp-path)
+      # WP_PATH="$2" # Saving for future use
+      shift
+      shift
+      ;;
+    -c | --cert-path)
       CERT_PATH="$2"
-      shift; shift;;
-    -a|--apache)
+      shift
+      shift
+      ;;
+    -a | --apache)
       WEB_SERVER="apache"
-      shift;;
-    -n|--nginx)
+      shift
+      ;;
+    -n | --nginx)
       WEB_SERVER="nginx"
-      shift;;
-    -h|--help)
-      usage;;
+      shift
+      ;;
+    -h | --help)
+      usage
+      ;;
     *)
       log "ERROR" "Unknown option: $1"
-      usage;;
+      usage
+      ;;
   esac
 done
 
