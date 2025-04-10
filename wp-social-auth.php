@@ -12,16 +12,18 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+namespace WordPressGmailCli\SocialAuth;
+
 /**
  * Main class for handling social authentication.
  */
-class WP_Social_Auth
+class SocialAuth
 {
-    private string $google_client_id;
-    private string $google_client_secret;
-    private string $facebook_app_id;
-    private string $facebook_app_secret;
-    private string $redirect_uri;
+    private string $googleClientId;
+    private string $googleClientSecret;
+    private string $facebookAppId;
+    private string $facebookAppSecret;
+    private string $redirectUri;
 
     /**
      * Constructor.
@@ -30,20 +32,20 @@ class WP_Social_Auth
      */
     public function __construct(array $config)
     {
-        $this->google_client_id     = $config['google_client_id'] ?? '';
-        $this->google_client_secret = $config['google_client_secret'] ?? '';
-        $this->facebook_app_id      = $config['facebook_app_id'] ?? '';
-        $this->facebook_app_secret  = $config['facebook_app_secret'] ?? '';
-        $this->redirect_uri         = admin_url('admin-ajax.php?action=social_login_callback');
+        $this->googleClientId     = $config['google_client_id'] ?? '';
+        $this->googleClientSecret = $config['google_client_secret'] ?? '';
+        $this->facebookAppId      = $config['facebook_app_id'] ?? '';
+        $this->facebookAppSecret  = $config['facebook_app_secret'] ?? '';
+        $this->redirectUri        = admin_url('admin-ajax.php?action=social_login_callback');
 
         // Initialize hooks.
-        add_action('login_form', [$this, 'add_social_login_buttons']);
-        add_action('wp_ajax_nopriv_social_login_callback', [$this, 'handle_social_login_callback']);
-        add_action('wp_ajax_social_login_callback', [$this, 'handle_social_login_callback']);
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
-        add_action('login_enqueue_scripts', [$this, 'enqueue_scripts']);
-        add_action('admin_init', [$this, 'register_settings']);
-        add_action('admin_menu', [$this, 'add_settings_page']);
+        add_action('login_form', [$this, 'addSocialLoginButtons']);
+        add_action('wp_ajax_nopriv_social_login_callback', [$this, 'handleSocialLoginCallback']);
+        add_action('wp_ajax_social_login_callback', [$this, 'handleSocialLoginCallback']);
+        add_action('wp_enqueue_scripts', [$this, 'enqueueScripts']);
+        add_action('login_enqueue_scripts', [$this, 'enqueueScripts']);
+        add_action('admin_init', [$this, 'registerSettings']);
+        add_action('admin_menu', [$this, 'addSettingsPage']);
     }
 
     /**
@@ -51,18 +53,22 @@ class WP_Social_Auth
      *
      * @return void
      */
-    public function add_social_login_buttons(): void
+    public function addSocialLoginButtons(): void
     {
         ?>
         <div class="social-login-buttons" style="margin-bottom: 20px; text-align: center;">
-            <?php if ($this->google_client_id) : ?>
-            <a href="<?php echo esc_url($this->get_google_auth_url()); ?>" class="button" style="background: #4285F4; color: white; margin-right: 10px; text-decoration: none; padding: 8px 12px; border-radius: 4px;">
+            <?php if ($this->googleClientId) : ?>
+            <a href="<?php echo esc_url($this->getGoogleAuthUrl()); ?>" class="button" 
+               style="background: #4285F4; color: white; margin-right: 10px; text-decoration: none; 
+                      padding: 8px 12px; border-radius: 4px;">
                 <span style="font-size: 16px; vertical-align: middle;">G</span> Login with Google
             </a>
             <?php endif; ?>
 
-            <?php if ($this->facebook_app_id) : ?>
-            <a href="<?php echo esc_url($this->get_facebook_auth_url()); ?>" class="button" style="background: #3b5998; color: white; text-decoration: none; padding: 8px 12px; border-radius: 4px;">
+            <?php if ($this->facebookAppId) : ?>
+            <a href="<?php echo esc_url($this->getFacebookAuthUrl()); ?>" class="button" 
+               style="background: #3b5998; color: white; text-decoration: none; padding: 8px 12px; 
+                      border-radius: 4px;">
                 <span style="font-size: 16px; vertical-align: middle;">f</span> Login with Facebook
             </a>
             <?php endif; ?>
@@ -75,7 +81,7 @@ class WP_Social_Auth
      *
      * @return void
      */
-    public function handle_social_login_callback(): void
+    public function handleSocialLoginCallback(): void
     {
         // Verify nonce for security.
         $provider = isset($_GET['provider']) ? sanitize_text_field(wp_unslash($_GET['provider'])) : '';
@@ -89,8 +95,8 @@ class WP_Social_Auth
         }
 
         // Verify state parameter to prevent CSRF.
-        $nonce_action = $provider === 'google' ? 'google_login' : 'facebook_login';
-        if (!wp_verify_nonce($state, $nonce_action)) {
+        $nonceAction = $provider === 'google' ? 'google_login' : 'facebook_login';
+        if (!wp_verify_nonce($state, $nonceAction)) {
             wp_safe_redirect(wp_login_url() . '?login=failed&reason=invalid_state');
             exit;
         }
@@ -101,22 +107,22 @@ class WP_Social_Auth
         }
 
         try {
-            $user_data = null;
+            $userData = null;
 
             if ($provider === 'google') {
-                $user_data = $this->get_google_user_data($code);
+                $userData = $this->getGoogleUserData($code);
             } elseif ($provider === 'facebook') {
-                $user_data = $this->get_facebook_user_data($code);
+                $userData = $this->getFacebookUserData($code);
             }
 
-            if ($user_data && isset($user_data['email']) && is_email($user_data['email'])) {
-                $this->login_or_create_user($user_data);
+            if ($userData && isset($userData['email']) && is_email($userData['email'])) {
+                $this->loginOrCreateUser($userData);
             } else {
                 // Redirect if email is not valid or not provided.
                 wp_safe_redirect(wp_login_url() . '?login=failed&reason=email_error');
                 exit;
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // Don't expose detailed error messages to users.
             error_log('Social login error: ' . $e->getMessage());
             wp_safe_redirect(wp_login_url() . '?login=failed&reason=provider_error');
@@ -129,11 +135,11 @@ class WP_Social_Auth
      *
      * @return string Google Auth URL.
      */
-    private function get_google_auth_url(): string
+    private function getGoogleAuthUrl(): string
     {
         $params = [
-            'client_id'     => $this->google_client_id,
-            'redirect_uri'  => $this->redirect_uri . '&provider=google',
+            'client_id'     => $this->googleClientId,
+            'redirect_uri'  => $this->redirectUri . '&provider=google',
             'response_type' => 'code',
             'scope'         => 'email profile',
             'access_type'   => 'online',
@@ -148,11 +154,11 @@ class WP_Social_Auth
      *
      * @return string Facebook Auth URL.
      */
-    private function get_facebook_auth_url(): string
+    private function getFacebookAuthUrl(): string
     {
         $params = [
-            'client_id'     => $this->facebook_app_id,
-            'redirect_uri'  => $this->redirect_uri . '&provider=facebook',
+            'client_id'     => $this->facebookAppId,
+            'redirect_uri'  => $this->redirectUri . '&provider=facebook',
             'response_type' => 'code',
             'scope'         => 'email', // Request email permission.
             'state'         => wp_create_nonce('facebook_login'), // CSRF protection.
@@ -166,62 +172,62 @@ class WP_Social_Auth
      * Get Google user data after exchanging the code for a token.
      *
      * @param string $code Authorization code from Google.
-     * @throws Exception If token or user info retrieval fails.
+     * @throws \Exception If token or user info retrieval fails.
      * @return array User data array.
      */
-    private function get_google_user_data(string $code): array
+    private function getGoogleUserData(string $code): array
     {
         // Exchange code for access token.
-        $token_url    = 'https://oauth2.googleapis.com/token';
-        $token_params = [
-            'client_id'     => $this->google_client_id,
-            'client_secret' => $this->google_client_secret,
+        $tokenUrl = 'https://oauth2.googleapis.com/token';
+        $tokenParams = [
+            'client_id'     => $this->googleClientId,
+            'client_secret' => $this->googleClientSecret,
             'code'          => $code,
-            'redirect_uri'  => $this->redirect_uri . '&provider=google',
+            'redirect_uri'  => $this->redirectUri . '&provider=google',
             'grant_type'    => 'authorization_code',
         ];
 
         $response = wp_remote_post(
-            $token_url,
+            $tokenUrl,
             [
-                'body'    => $token_params,
+                'body'    => $tokenParams,
                 'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
             ]
         );
 
         if (is_wp_error($response)) {
-            throw new Exception('Failed to get Google access token: ' . $response->get_error_message());
+            throw new \Exception('Failed to get Google access token: ' . $response->get_error_message());
         }
 
-        $token_data = json_decode(wp_remote_retrieve_body($response), true);
+        $tokenData = json_decode(wp_remote_retrieve_body($response), true);
 
-        if (!isset($token_data['access_token'])) {
-            $error_description = $token_data['error_description'] ?? 'Unknown error';
-            throw new Exception('Failed to get Google access token: ' . $error_description);
+        if (!isset($tokenData['access_token'])) {
+            $errorDescription = $tokenData['error_description'] ?? 'Unknown error';
+            throw new \Exception('Failed to get Google access token: ' . $errorDescription);
         }
 
         // Get user info.
-        $user_info_url      = 'https://www.googleapis.com/oauth2/v3/userinfo';
-        $user_info_response = wp_remote_get(
-            $user_info_url,
+        $userInfoUrl = 'https://www.googleapis.com/oauth2/v3/userinfo';
+        $userInfoResponse = wp_remote_get(
+            $userInfoUrl,
             [
-                'headers' => ['Authorization' => 'Bearer ' . $token_data['access_token']],
+                'headers' => ['Authorization' => 'Bearer ' . $tokenData['access_token']],
             ]
         );
 
-        if (is_wp_error($user_info_response)) {
-            throw new Exception('Failed to get Google user info: ' . $user_info_response->get_error_message());
+        if (is_wp_error($userInfoResponse)) {
+            throw new \Exception('Failed to get Google user info: ' . $userInfoResponse->get_error_message());
         }
 
-        $user_info = json_decode(wp_remote_retrieve_body($user_info_response), true);
+        $userInfo = json_decode(wp_remote_retrieve_body($userInfoResponse), true);
 
         return [
-            'email'        => $user_info['email'] ?? '',
-            'first_name'   => $user_info['given_name'] ?? '',
-            'last_name'    => $user_info['family_name'] ?? '',
-            'display_name' => $user_info['name'] ?? '',
+            'email'        => $userInfo['email'] ?? '',
+            'first_name'   => $userInfo['given_name'] ?? '',
+            'last_name'    => $userInfo['family_name'] ?? '',
+            'display_name' => $userInfo['name'] ?? '',
             'provider'     => 'google',
-            'provider_id'  => $user_info['sub'] ?? '', // 'sub' is the standard Google user ID.
+            'provider_id'  => $userInfo['sub'] ?? '', // 'sub' is the standard Google user ID.
         ];
     }
 
@@ -229,102 +235,102 @@ class WP_Social_Auth
      * Get Facebook user data after exchanging the code for a token.
      *
      * @param string $code Authorization code from Facebook.
-     * @throws Exception If token or user info retrieval fails.
+     * @throws \Exception If token or user info retrieval fails.
      * @return array User data array.
      */
-    private function get_facebook_user_data(string $code): array
+    private function getFacebookUserData(string $code): array
     {
         // Exchange code for access token.
         // Ensure correct Facebook API version (check documentation for current).
-        $token_url    = 'https://graph.facebook.com/v18.0/oauth/access_token';
-        $token_params = [
-            'client_id'     => $this->facebook_app_id,
-            'client_secret' => $this->facebook_app_secret,
+        $tokenUrl = 'https://graph.facebook.com/v18.0/oauth/access_token';
+        $tokenParams = [
+            'client_id'     => $this->facebookAppId,
+            'client_secret' => $this->facebookAppSecret,
             'code'          => $code,
-            'redirect_uri'  => $this->redirect_uri . '&provider=facebook',
+            'redirect_uri'  => $this->redirectUri . '&provider=facebook',
         ];
 
-        $response = wp_remote_get($token_url . '?' . http_build_query($token_params));
+        $response = wp_remote_get($tokenUrl . '?' . http_build_query($tokenParams));
 
         if (is_wp_error($response)) {
-            throw new Exception('Failed to get Facebook access token: ' . $response->get_error_message());
+            throw new \Exception('Failed to get Facebook access token: ' . $response->get_error_message());
         }
 
-        $token_data = json_decode(wp_remote_retrieve_body($response), true);
+        $tokenData = json_decode(wp_remote_retrieve_body($response), true);
 
-        if (!isset($token_data['access_token'])) {
-            $error_message = $token_data['error']['message'] ?? 'Unknown error';
-            throw new Exception('Failed to get Facebook access token: ' . $error_message);
+        if (!isset($tokenData['access_token'])) {
+            $errorMessage = $tokenData['error']['message'] ?? 'Unknown error';
+            throw new \Exception('Failed to get Facebook access token: ' . $errorMessage);
         }
 
         // Get user info.
         // Ensure correct Facebook API version (check documentation for current).
-        $user_info_url    = 'https://graph.facebook.com/v18.0/me';
-        $user_info_params = [
+        $userInfoUrl = 'https://graph.facebook.com/v18.0/me';
+        $userInfoParams = [
             'fields'       => 'id,email,first_name,last_name,name', // Specify required fields.
-            'access_token' => $token_data['access_token'],
+            'access_token' => $tokenData['access_token'],
         ];
 
-        $user_info_response = wp_remote_get($user_info_url . '?' . http_build_query($user_info_params));
+        $userInfoResponse = wp_remote_get($userInfoUrl . '?' . http_build_query($userInfoParams));
 
-        if (is_wp_error($user_info_response)) {
-            throw new Exception('Failed to get Facebook user info: ' . $user_info_response->get_error_message());
+        if (is_wp_error($userInfoResponse)) {
+            throw new \Exception('Failed to get Facebook user info: ' . $userInfoResponse->get_error_message());
         }
 
-        $user_info = json_decode(wp_remote_retrieve_body($user_info_response), true);
+        $userInfo = json_decode(wp_remote_retrieve_body($userInfoResponse), true);
 
         return [
-            'email'        => $user_info['email'] ?? '', // Email might not be returned if user denies permission.
-            'first_name'   => $user_info['first_name'] ?? '',
-            'last_name'    => $user_info['last_name'] ?? '',
-            'display_name' => $user_info['name'] ?? '',
+            'email'        => $userInfo['email'] ?? '', // Email might not be returned if user denies permission.
+            'first_name'   => $userInfo['first_name'] ?? '',
+            'last_name'    => $userInfo['last_name'] ?? '',
+            'display_name' => $userInfo['name'] ?? '',
             'provider'     => 'facebook',
-            'provider_id'  => $user_info['id'] ?? '',
+            'provider_id'  => $userInfo['id'] ?? '',
         ];
     }
 
     /**
      * Login or create a user based on social login data.
      *
-     * @param array $user_data User data from the provider.
-     * @throws Exception If user creation fails.
+     * @param array $userData User data from the provider.
+     * @throws \Exception If user creation fails.
      * @return void
      */
-    private function login_or_create_user(array $user_data): void
+    private function loginOrCreateUser(array $userData): void
     {
-        $user = get_user_by('email', $user_data['email']);
+        $user = get_user_by('email', $userData['email']);
 
         if (!$user) {
             // Create a new user.
-            $username = $this->generate_unique_username($user_data['email']);
+            $username = $this->generateUniqueUsername($userData['email']);
 
-            $user_id = wp_create_user($username, wp_generate_password(), $user_data['email']);
+            $userId = wp_create_user($username, wp_generate_password(), $userData['email']);
 
-            if (is_wp_error($user_id)) {
-                throw new Exception('Failed to create user: ' . $user_id->get_error_message());
+            if (is_wp_error($userId)) {
+                throw new \Exception('Failed to create user: ' . $userId->get_error_message());
             }
 
             // Update user meta with details from social profile.
             wp_update_user(
                 [
-                    'ID'           => $user_id,
-                    'first_name'   => $user_data['first_name'],
-                    'last_name'    => $user_data['last_name'],
-                    'display_name' => $user_data['display_name'],
+                    'ID'           => $userId,
+                    'first_name'   => $userData['first_name'],
+                    'last_name'    => $userData['last_name'],
+                    'display_name' => $userData['display_name'],
                 ]
             );
 
-            update_user_meta($user_id, 'social_login_provider', $user_data['provider']);
-            update_user_meta($user_id, 'social_login_provider_id', $user_data['provider_id']);
+            update_user_meta($userId, 'social_login_provider', $userData['provider']);
+            update_user_meta($userId, 'social_login_provider_id', $userData['provider_id']);
 
-            $user = get_user_by('id', $user_id);
+            $user = get_user_by('id', $userId);
 
             // Optionally, send the new user notification.
-            // wp_new_user_notification($user_id, null, 'user'); // or 'both'
+            // wp_new_user_notification($userId, null, 'user'); // or 'both'
         } else {
             // Optional: Update existing user's meta if needed (e.g., refresh provider ID).
-            update_user_meta($user->ID, 'social_login_provider', $user_data['provider']);
-            update_user_meta($user->ID, 'social_login_provider_id', $user_data['provider_id']);
+            update_user_meta($user->ID, 'social_login_provider', $userData['provider']);
+            update_user_meta($user->ID, 'social_login_provider_id', $userData['provider_id']);
         }
 
         // Log the user in.
@@ -332,8 +338,8 @@ class WP_Social_Auth
         wp_set_auth_cookie($user->ID, true);
 
         // Redirect to admin dashboard or home page based on capabilities.
-        $redirect_url = user_can($user->ID, 'manage_options') ? admin_url() : home_url();
-        wp_safe_redirect($redirect_url);
+        $redirectUrl = user_can($user->ID, 'manage_options') ? admin_url() : home_url();
+        wp_safe_redirect($redirectUrl);
         exit;
     }
 
@@ -344,19 +350,21 @@ class WP_Social_Auth
      * @param string $email User's email address.
      * @return string A unique username.
      */
-    private function generate_unique_username(string $email): string
+    private function generateUniqueUsername(string $email): string
     {
-        $email_parts       = explode('@', $email);
-        $username          = sanitize_user(current($email_parts), true);
+        $emailParts = explode('@', $email);
+        $username = sanitize_user(current($emailParts), true);
+        
         // Ensure username is not empty after sanitization.
         if (empty($username)) {
-             $username = 'user' . time(); // Fallback username.
+            $username = 'user' . time(); // Fallback username.
         }
-        $original_username = $username;
-        $i                 = 1;
+        
+        $originalUsername = $username;
+        $i = 1;
 
         while (username_exists($username)) {
-            $username = $original_username . $i;
+            $username = $originalUsername . $i;
             $i++;
         }
 
@@ -368,7 +376,7 @@ class WP_Social_Auth
      *
      * @return void
      */
-    public function enqueue_scripts(): void
+    public function enqueueScripts(): void
     {
         // Enqueue Dashicons for potential use in buttons or UI elements.
         wp_enqueue_style('dashicons');
@@ -379,12 +387,28 @@ class WP_Social_Auth
      *
      * @return void
      */
-    public function register_settings(): void
+    public function registerSettings(): void
     {
-        register_setting('wp_social_auth_settings', 'wp_social_auth_google_client_id', ['sanitize_callback' => 'sanitize_text_field']);
-        register_setting('wp_social_auth_settings', 'wp_social_auth_google_client_secret', ['sanitize_callback' => 'sanitize_text_field']);
-        register_setting('wp_social_auth_settings', 'wp_social_auth_facebook_app_id', ['sanitize_callback' => 'sanitize_text_field']);
-        register_setting('wp_social_auth_settings', 'wp_social_auth_facebook_app_secret', ['sanitize_callback' => 'sanitize_text_field']);
+        register_setting(
+            'wp_social_auth_settings', 
+            'wp_social_auth_google_client_id', 
+            ['sanitize_callback' => 'sanitize_text_field']
+        );
+        register_setting(
+            'wp_social_auth_settings', 
+            'wp_social_auth_google_client_secret', 
+            ['sanitize_callback' => 'sanitize_text_field']
+        );
+        register_setting(
+            'wp_social_auth_settings', 
+            'wp_social_auth_facebook_app_id', 
+            ['sanitize_callback' => 'sanitize_text_field']
+        );
+        register_setting(
+            'wp_social_auth_settings', 
+            'wp_social_auth_facebook_app_secret', 
+            ['sanitize_callback' => 'sanitize_text_field']
+        );
     }
 
     /**
@@ -392,14 +416,14 @@ class WP_Social_Auth
      *
      * @return void
      */
-    public function add_settings_page(): void
+    public function addSettingsPage(): void
     {
         add_options_page(
             'Social Login Settings', // Page title.
             'Social Login', // Menu title.
             'manage_options', // Capability required.
             'wp-social-auth-settings', // Menu slug.
-            [$this, 'render_settings_page'] // Function to display the page content.
+            [$this, 'renderSettingsPage'] // Function to display the page content.
         );
     }
 
@@ -408,7 +432,7 @@ class WP_Social_Auth
      *
      * @return void
      */
-    public function render_settings_page(): void
+    public function renderSettingsPage(): void
     {
         // Check user capabilities.
         if (!current_user_can('manage_options')) {
@@ -422,37 +446,71 @@ class WP_Social_Auth
                 <?php // Sections can be added here using add_settings_section() and do_settings_sections() ?>
 
                 <h2>Google Authentication</h2>
-                <p>Register your application at <a href="https://console.developers.google.com/" target="_blank" rel="noopener noreferrer">Google Cloud Console</a> to get these credentials.</p>
-                <p>Your authorized redirect URI is: <code><?php echo esc_html($this->redirect_uri . '&provider=google'); ?></code></p>
+                <p>
+                    Register your application at 
+                    <a href="https://console.developers.google.com/" target="_blank" rel="noopener noreferrer">
+                        Google Cloud Console
+                    </a> 
+                    to get these credentials.
+                </p>
+                <p>
+                    Your authorized redirect URI is: 
+                    <code><?php echo esc_html($this->redirectUri . '&provider=google'); ?></code>
+                </p>
                 <table class="form-table" role="presentation">
                     <tr>
                         <th scope="row"><label for="wp_social_auth_google_client_id">Client ID</label></th>
                         <td>
-                            <input type="text" id="wp_social_auth_google_client_id" name="wp_social_auth_google_client_id" value="<?php echo esc_attr(get_option('wp_social_auth_google_client_id')); ?>" class="regular-text" />
+                            <input type="text" 
+                                   id="wp_social_auth_google_client_id" 
+                                   name="wp_social_auth_google_client_id" 
+                                   value="<?php echo esc_attr(get_option('wp_social_auth_google_client_id')); ?>" 
+                                   class="regular-text" />
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="wp_social_auth_google_client_secret">Client Secret</label></th>
                         <td>
-                            <input type="password" id="wp_social_auth_google_client_secret" name="wp_social_auth_google_client_secret" value="<?php echo esc_attr(get_option('wp_social_auth_google_client_secret')); ?>" class="regular-text" />
+                            <input type="password" 
+                                   id="wp_social_auth_google_client_secret" 
+                                   name="wp_social_auth_google_client_secret" 
+                                   value="<?php echo esc_attr(get_option('wp_social_auth_google_client_secret')); ?>" 
+                                   class="regular-text" />
                         </td>
                     </tr>
                 </table>
 
                 <h2>Facebook Authentication</h2>
-                <p>Register your application at <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">Facebook for Developers</a> to get these credentials.</p>
-                 <p>Your valid OAuth redirect URI is: <code><?php echo esc_html($this->redirect_uri . '&provider=facebook'); ?></code></p>
-               <table class="form-table" role="presentation">
+                <p>
+                    Register your application at 
+                    <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">
+                        Facebook for Developers
+                    </a> 
+                    to get these credentials.
+                </p>
+                <p>
+                    Your valid OAuth redirect URI is: 
+                    <code><?php echo esc_html($this->redirectUri . '&provider=facebook'); ?></code>
+                </p>
+                <table class="form-table" role="presentation">
                     <tr>
                         <th scope="row"><label for="wp_social_auth_facebook_app_id">App ID</label></th>
                         <td>
-                            <input type="text" id="wp_social_auth_facebook_app_id" name="wp_social_auth_facebook_app_id" value="<?php echo esc_attr(get_option('wp_social_auth_facebook_app_id')); ?>" class="regular-text" />
+                            <input type="text" 
+                                   id="wp_social_auth_facebook_app_id" 
+                                   name="wp_social_auth_facebook_app_id" 
+                                   value="<?php echo esc_attr(get_option('wp_social_auth_facebook_app_id')); ?>" 
+                                   class="regular-text" />
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="wp_social_auth_facebook_app_secret">App Secret</label></th>
                         <td>
-                            <input type="password" id="wp_social_auth_facebook_app_secret" name="wp_social_auth_facebook_app_secret" value="<?php echo esc_attr(get_option('wp_social_auth_facebook_app_secret')); ?>" class="regular-text" />
+                            <input type="password" 
+                                   id="wp_social_auth_facebook_app_secret" 
+                                   name="wp_social_auth_facebook_app_secret" 
+                                   value="<?php echo esc_attr(get_option('wp_social_auth_facebook_app_secret')); ?>" 
+                                   class="regular-text" />
                         </td>
                     </tr>
                 </table>
@@ -462,30 +520,46 @@ class WP_Social_Auth
         </div>
         <?php
     }
-} // End class WP_Social_Auth
-
-/**
- * Initializes the WP_Social_Auth plugin.
- * Retrieves settings from options and instantiates the main class.
- *
- * @param array $config Optional config override.
- * @return void
- */
-function wp_social_auth_init(array $config = []): void
-{
-    // Get settings from options if not provided via config array.
-    if (empty($config)) {
-        $config = [
-            'google_client_id'     => get_option('wp_social_auth_google_client_id'),
-            'google_client_secret' => get_option('wp_social_auth_google_client_secret'),
-            'facebook_app_id'      => get_option('wp_social_auth_facebook_app_id'),
-            'facebook_app_secret'  => get_option('wp_social_auth_facebook_app_secret'),
-        ];
-    }
-
-    // Initialize the plugin class.
-    new WP_Social_Auth($config);
 }
 
-// Hook the initialization function to WordPress 'init' action.
-add_action('plugins_loaded', 'wp_social_auth_init'); // Use plugins_loaded for options retrieval compatibility.
+/**
+ * Factory class to create and initialize the SocialAuth plugin.
+ */
+class SocialAuthFactory
+{
+    /**
+     * Create and initialize the SocialAuth instance.
+     *
+     * @param array $config Optional config override.
+     * @return SocialAuth The social authentication instance.
+     */
+    public static function create(array $config = []): SocialAuth
+    {
+        // Get settings from options if not provided via config array.
+        if (empty($config)) {
+            $config = [
+                'google_client_id'     => get_option('wp_social_auth_google_client_id'),
+                'google_client_secret' => get_option('wp_social_auth_google_client_secret'),
+                'facebook_app_id'      => get_option('wp_social_auth_facebook_app_id'),
+                'facebook_app_secret'  => get_option('wp_social_auth_facebook_app_secret'),
+            ];
+        }
+
+        // Initialize the plugin class.
+        return new SocialAuth($config);
+    }
+}
+
+/**
+ * Initializes the SocialAuth plugin.
+ * Retrieves settings from options and instantiates the main class.
+ *
+ * @return void
+ */
+function initSocialAuth(): void
+{
+    SocialAuthFactory::create();
+}
+
+// Hook the initialization function to WordPress 'plugins_loaded' action.
+add_action('plugins_loaded', __NAMESPACE__ . '\\initSocialAuth');
