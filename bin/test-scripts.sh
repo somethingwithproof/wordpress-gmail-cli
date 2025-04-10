@@ -6,8 +6,9 @@
 
 set -e
 
+# shellcheck disable=SC2034 # Used in string formatting for logs
+BOLD="\033[1m"
 # Text formatting
-BOLD="\033[1m" # Used in log function
 RED="\033[31m"
 GREEN="\033[32m"
 YELLOW="\033[33m"
