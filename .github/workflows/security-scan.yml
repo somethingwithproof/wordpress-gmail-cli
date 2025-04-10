@@ -27,8 +27,6 @@ jobs:
         with:
           # Only report actual errors (exit code != 0 from shellcheck)
           severity: error
-        # Remove continue-on-error if you want the job to FAIL on errors
-        # continue-on-error: true
 
   trivy-scan:
     name: Trivy Vulnerability Scan (Container)
@@ -86,15 +84,6 @@ jobs:
         with:
           fetch-depth: 0 # Recommended for CodeQL
 
-      # Add PHP Setup if scanning PHP
-      # - name: Setup PHP
-      #   if: contains(...) # Logic depends on how languages are specified
-      #   uses: shivammathur/setup-php@v2
-      #   with:
-      #     php-version: '8.2'
-      #     coverage: none
-      #     tools: none
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -105,20 +94,17 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: 'javascript'
+          languages: 'php'
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
-        # Remove continue-on-error to fail job on findings (Error, High, Medium default)
-        # continue-on-error: true
 
   secret-scan:
     name: Secret Scanning (TruffleHog)
     runs-on: ubuntu-latest
     permissions:
       contents: read          # REQUIRED for checkout
-      # Check TruffleHog action docs if it utilizes security-events: write for SARIF upload
       security-events: write # Potentially needed
 
     steps:
@@ -137,4 +123,3 @@ jobs:
           head: HEAD
           # Only report verified secrets, enable debug logging
           extra_args: --debug --only-verified
-        # Action will typically fail if verified secrets are found
