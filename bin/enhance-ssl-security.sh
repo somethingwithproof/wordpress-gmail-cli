@@ -77,7 +77,7 @@ detect_web_server() {
 
 # Main script execution
 DOMAIN=""
-WP_PATH="/var/www/html"
+# # WP_PATH="/var/www/html" # Saved for future use # Saved for future use
 CERT_PATH=""
 WEB_SERVER=""
 
