@@ -12,22 +12,13 @@ queries:
   # Add custom queries for PHP-specific security issues
   - name: PHP Security Queries
     uses: ./.github/codeql/security-queries/php
-  # Add custom queries for JavaScript-specific security issues
-  - name: JavaScript Security Queries
-    uses: ./.github/codeql/security-queries/javascript # Ensure this path is correct
 
 # Define paths to exclude from analysis
 paths-ignore:
   # Dependency directories
-  - '**/node_modules/**'
   - '**/vendor/**'
   # Test files (can be refined if necessary)
-  - '**/*.test.js'
-  - '**/*.spec.js'
   - '**/*Test.php'
-  # Minified files
-  - '**/*.min.js'
-  - '**/*.min.css'
   # Documentation
   - '**/*.md'
   - '**/*.txt'
@@ -40,8 +31,6 @@ paths:
   - bin
   # Specific PHP file entrypoint
   - wp-social-auth.php
-  # All JavaScript files (respecting paths-ignore)
-  - '**/*.js'
   # Configuration files
   - '**/*.json'
   - '**/*.yml'
@@ -49,18 +38,6 @@ paths:
 
 # Language-specific configuration
 languages:
-  # JavaScript configuration
-  - name: javascript
-    # Specify patterns for test files (used by some metrics/queries)
-    test-patterns:
-      - '**/*.test.js'
-      - '**/*.spec.js'
-    # Configure extraction
-    extraction:
-      # Specify JavaScript version
-      javascript:
-        ecmascript: es2020
-
   # PHP configuration
   - name: php
     # Specify patterns for test files (used by some metrics/queries)
