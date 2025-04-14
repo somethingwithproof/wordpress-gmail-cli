@@ -1,4 +1,4 @@
-FROM php:8.2-cli-alpine3.19
+FROM php:8.4-cli-alpine3.19
 
 # Install dependencies with specific versions to fix security vulnerabilities
 RUN apk add --no-cache \
