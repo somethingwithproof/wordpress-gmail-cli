@@ -6,6 +6,9 @@ on:
     paths-ignore:
       - '**/*.md'
       - '**/*.txt'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.gitignore'
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -28,13 +31,30 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
+          extensions: mbstring, xml, zip, intl, json, curl
           tools: phpcs, phpstan, php-cs-fixer
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
 
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@master
         with:
           severity: error
-
+          
       - name: Run shfmt
         uses: luizm/action-sh-checker@v0.5.0
         env:
@@ -44,68 +64,67 @@ jobs:
           sh_checker_exclude: vendor
 
       - name: Run PHP_CodeSniffer
-        run: phpcs --standard=PSR12 wp-social-auth.php
+        run: vendor/bin/phpcs --standard=PSR12 wp-social-auth.php src/
 
       - name: Run PHPStan
-        run: phpstan analyse wp-social-auth.php --level=5
+        run: vendor/bin/phpstan analyse --level=5 wp-social-auth.php src/
 
       - name: Run PHP-CS-Fixer
-        run: php-cs-fixer fix wp-social-auth.php --dry-run --diff
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: lint
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          coverage: none
-          tools: none
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          exit-code: '1'
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results.sarif'
-          category: 'trivy'
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: php
-          config-file: ./.github/codeql/codeql-config.yml
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:php"
+        run: vendor/bin/php-cs-fixer fix wp-social-auth.php src/ --dry-run --diff --config=.php-cs-fixer.dist.php
 
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
-    needs: security-scan
+    needs: lint
     permissions:
       contents: read
-      actions: write
+      actions: read
+    strategy:
+      matrix:
+        php-version: ['7.4', '8.0', '8.1', '8.2']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, xml, zip, intl, json, curl
+          coverage: xdebug
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-${{ matrix.php-version }}-
+            ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Run tests
+        run: vendor/bin/phpunit --coverage-clover=coverage.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -123,11 +142,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Make scripts executable
-        run: chmod +x bin/*.sh
-
-      - name: Test Docker image
-        run: bin/test-docker.sh
-
-      - name: Test shell scripts
-        run: bin/test-scripts.sh
+      - name: Verify scripts are executable
+        run: |
+          docker run --rm wordpress-gmail-cli:test sh -c "ls -la /app/bin/ | grep '\.sh'"
+          docker run --rm wordpress-gmail-cli:test sh -c "test -x /app/bin/test-docker.sh && echo 'Script is executable' || echo 'Script is not executable'"

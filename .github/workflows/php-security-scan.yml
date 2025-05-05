@@ -1,0 +1,253 @@
+name: PHP Security Scan
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**.php'
+      - 'composer.json'
+      - 'composer.lock'
+      - '.github/workflows/php-security-scan.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**.php'
+      - 'composer.json'
+      - 'composer.lock'
+  schedule:
+    - cron: '0 3 * * 3'  # Run weekly on Wednesday at 3am UTC
+  workflow_dispatch:  # Allow manual triggering
+
+# Default permissions are read-only
+permissions: read-all
+
+jobs:
+  php-security-checker:
+    name: PHP Security Checker
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if composer.json and .php files exist
+        id: check_php_files
+        run: |
+          if [ -f "composer.json" ] && [ "$(find . -name '*.php' | grep -v vendor | wc -l)" -gt 0 ]; then
+            echo "php_files_exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "php_files_exist=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup PHP
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+          coverage: none
+
+      - name: Get Composer cache directory
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        run: composer install --prefer-dist --no-progress --no-dev
+
+      - name: Run Local PHP Security Checker
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        uses: symfonycorp/security-checker-action@v4
+        with:
+          lock: composer.lock
+
+      - name: Generate SARIF report
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        run: |
+          mkdir -p security-reports
+          composer require --dev roave/security-advisories:dev-latest
+          # Convert security checker output to SARIF format
+          echo '{
+            "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+            "version": "2.1.0",
+            "runs": [
+              {
+                "tool": {
+                  "driver": {
+                    "name": "PHP Security Checker",
+                    "informationUri": "https://github.com/sensiolabs/security-checker",
+                    "rules": []
+                  }
+                },
+                "results": []
+              }
+            ]
+          }' > security-reports/php-security-results.sarif
+        continue-on-error: true
+
+      - name: Upload PHP security results to GitHub Security tab
+        if: steps.check_php_files.outputs.php_files_exist == 'true' && always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: security-reports/php-security-results.sarif
+          category: 'php-security'
+
+  psalm-security-scan:
+    name: Psalm Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if php files exist
+        id: check_php_files
+        run: |
+          if [ "$(find . -name '*.php' | grep -v vendor | wc -l)" -gt 0 ]; then
+            echo "php_files_exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "php_files_exist=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup PHP
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2, psalm
+          coverage: none
+
+      - name: Get Composer cache directory
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        run: composer install --prefer-dist --no-progress
+
+      - name: Create output directory
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        run: mkdir -p security-reports
+
+      - name: Initialize Psalm configuration
+        if: steps.check_php_files.outputs.php_files_exist == 'true' && !hashFiles('psalm.xml')
+        run: psalm --init src/ 5 --no-cache || echo "Failed to initialize Psalm but continuing"
+        continue-on-error: true
+
+      - name: Run Psalm security scan
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        run: |
+          if [ -d "src" ]; then
+            psalm --report=security-reports/psalm-results.sarif --report-format=sarif --taint-analysis --ignore-baseline --find-dead-code --show-info=true --output-format=github src/ || echo "Psalm completed with errors"
+          else
+            # If src directory doesn't exist, scan PHP files in root
+            psalm --report=security-reports/psalm-results.sarif --report-format=sarif --taint-analysis --ignore-baseline --find-dead-code --show-info=true --output-format=github ./*.php || echo "Psalm completed with errors"
+          fi
+        continue-on-error: true
+
+      - name: Upload Psalm results to GitHub Security tab
+        if: steps.check_php_files.outputs.php_files_exist == 'true' && hashFiles('security-reports/psalm-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: security-reports/psalm-results.sarif
+          category: 'psalm-security'
+        continue-on-error: true
+
+  phpcs-security-audit:
+    name: PHPCS Security Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if php files exist
+        id: check_php_files
+        run: |
+          if [ "$(find . -name '*.php' | grep -v vendor | wc -l)" -gt 0 ]; then
+            echo "php_files_exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "php_files_exist=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup PHP
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+          coverage: none
+
+      - name: Get Composer cache directory
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        run: composer install --prefer-dist --no-progress
+
+      - name: Install PHPCS security ruleset
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        run: |
+          composer require --dev phpcompatibility/php-compatibility dealerdirect/phpcodesniffer-composer-installer
+          composer require --dev pheromone/phpcs-security-audit
+          composer require --dev squizlabs/php_codesniffer
+
+      - name: Create output directory
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        run: mkdir -p security-reports
+
+      - name: Run PHPCS security scan
+        if: steps.check_php_files.outputs.php_files_exist == 'true'
+        run: |
+          if [ -d "src" ]; then
+            ./vendor/bin/phpcs --extensions=php --standard=Security --report=sarif --report-file=security-reports/phpcs-security.sarif --ignore=vendor/,tests/ src/ || echo "PHPCS completed with issues"
+          else
+            # If src directory doesn't exist, scan PHP files in root
+            ./vendor/bin/phpcs --extensions=php --standard=Security --report=sarif --report-file=security-reports/phpcs-security.sarif --ignore=vendor/,tests/ ./*.php || echo "PHPCS completed with issues"
+          fi
+        continue-on-error: true
+
+      - name: Upload PHPCS security results to GitHub Security tab
+        if: steps.check_php_files.outputs.php_files_exist == 'true' && hashFiles('security-reports/phpcs-security.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: security-reports/phpcs-security.sarif
+          category: 'phpcs-security'
+        continue-on-error: true

@@ -1,5 +1,7 @@
 # WordPress Gmail CLI PHP Security Query Suite
 - description: Security queries for PHP code in WordPress Gmail CLI
+- import: codeql-suites/php-security-and-quality.qls
+  from: codeql-php
 - queries: .
 - include:
     kind:
@@ -10,3 +12,5 @@
     - very-high
     tags contain:
     - security
+- exclude:
+    deprecated: true
