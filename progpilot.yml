@@ -1,0 +1,89 @@
+# Progpilot configuration for WordPress Gmail CLI
+runtime:
+  include_files:
+    - functions
+    - methods
+    - paths
+    - sanitizers
+    - sinks
+    - sources
+    - transforms
+  exclude_files:
+    - /vendor/
+    - /node_modules/
+
+# WordPress-specific sinks and sources
+sources:
+  - name: "_GET"
+    service: "UserInput"
+  - name: "_POST"
+    service: "UserInput"
+  - name: "_COOKIE"
+    service: "UserInput"
+  - name: "_REQUEST"
+    service: "UserInput"
+  - name: "$_SERVER['PHP_SELF']"
+    service: "UserInput"
+  - name: "$_SERVER['REQUEST_URI']"
+    service: "UserInput"
+  - name: "get_option"
+    service: "WordPressInput"
+  - name: "wp_unslash"
+    service: "WordPressInput"
+
+sinks:
+  - name: "echo"
+    service: "XSS"
+  - name: "print"
+    service: "XSS"
+  - name: "file_get_contents"
+    service: "FileInclusion"
+  - name: "include"
+    service: "FileInclusion"
+  - name: "require"
+    service: "FileInclusion"
+  - name: "include_once"
+    service: "FileInclusion"
+  - name: "require_once"
+    service: "FileInclusion"
+  - name: "shell_exec"
+    service: "CommandExecution"
+  - name: "system"
+    service: "CommandExecution"
+  - name: "exec"
+    service: "CommandExecution"
+  - name: "passthru"
+    service: "CommandExecution"
+  - name: "$wpdb->query"
+    service: "SQLInjection"
+  - name: "$wpdb->get_results"
+    service: "SQLInjection"
+  - name: "$wpdb->get_row"
+    service: "SQLInjection"
+
+sanitizers:
+  - name: "esc_html"
+    service: "RemoveXSS"
+  - name: "esc_attr"
+    service: "RemoveXSS"
+  - name: "esc_url"
+    service: "RemoveXSS"
+  - name: "sanitize_text_field"
+    service: "RemoveXSS"
+  - name: "$wpdb->prepare"
+    service: "RemoveSQLInjection"
+  - name: "esc_sql"
+    service: "RemoveSQLInjection"
+
+transforms:
+  - name: "htmlspecialchars"
+    service: "RemoveXSS"
+  - name: "htmlentities"
+    service: "RemoveXSS"
+  - name: "addslashes"
+    service: "RemoveSQLInjection"
+
+output:
+  format: json
+  type: file
+  output: security-reports/progpilot-results.json

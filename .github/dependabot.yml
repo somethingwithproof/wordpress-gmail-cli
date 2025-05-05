@@ -5,6 +5,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
@@ -12,50 +15,71 @@ updates:
     commit-message:
       prefix: "ci"
       include: "scope"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    reviewers:
+      - "thomasvincent"
 
   # Enable version updates for Docker
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
     labels:
       - "dependencies"
       - "docker"
     commit-message:
       prefix: "docker"
       include: "scope"
-
-  # Enable version updates for npm
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "npm"
-    commit-message:
-      prefix: "build"
-      include: "scope"
-    ignore:
-      # Ignore major updates to packages
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
+    reviewers:
+      - "thomasvincent"
 
   # Enable version updates for Composer
   - package-ecosystem: "composer"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    allow:
+      # Allow both direct and indirect updates for all packages
+      - dependency-type: "all"
+    versioning-strategy: "increase-if-necessary"
+    open-pull-requests-limit: 15
     labels:
       - "dependencies"
       - "php"
     commit-message:
-      prefix: "build"
+      prefix: "deps"
       include: "scope"
     ignore:
-      # Ignore major updates to packages
+      # Ignore major updates to core packages that might break compatibility
+      - dependency-name: "php"
+        versions: ["9.x"]
+      # Ignore major updates to other packages
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+    groups:
+      # Group minor and patch updates for dependencies
+      php-dependencies:
+        patterns:
+          - "psr/*"
+          - "monolog/*"
+      # Group security updates
+      security-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+    reviewers:
+      - "thomasvincent"
+
+  # Remove npm configuration as it's not used in the project
+  # Keeping only the ecosystems actually used in the project
