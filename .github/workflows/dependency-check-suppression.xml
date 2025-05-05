@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+   <!-- Example suppression. Uncomment and customize as needed -->
+   <!--
+   <suppress>
+      <notes>False positive for CVE-xxxx-yyyy</notes>
+      <packageUrl regex="true">pkg:composer/package-name@.*</packageUrl>
+      <cve>CVE-xxxx-yyyy</cve>
+   </suppress>
+   -->
+</suppressions>

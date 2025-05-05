@@ -1,11 +1,11 @@
-name: Custom CodeQL Configuration
+name: "WordPress Social Authentication CodeQL Configuration"
 
-# Disable default queries to use our custom ones alongside standard suites
-disable-default-queries: true
+# Use custom queries along with default queries
+disable-default-queries: false
 
 # Define query suites to run
 queries:
-  # Run standard security and quality queries
+  # Run standard security and quality queries (default)
   - uses: security-and-quality
   # Add standard security-extended queries for more comprehensive analysis
   - uses: security-extended
@@ -17,24 +17,13 @@ queries:
 paths-ignore:
   # Dependency directories
   - '**/vendor/**'
-  # Test files (can be refined if necessary)
-  - '**/*Test.php'
+  - '**/node_modules/**'
+  # Test files - we don't exclude tests completely to catch bugs in test utilities
+  - '**/tests/fixtures/**'
   # Documentation
   - '**/*.md'
   - '**/*.txt'
   - '**/docs/**'
-
-# Define paths to include in analysis (optional, CodeQL scans all non-ignored by default)
-# If specified, ONLY these paths (respecting paths-ignore) are scanned.
-paths:
-  # Shell scripts
-  - bin
-  # Specific PHP file entrypoint
-  - wp-social-auth.php
-  # Configuration files
-  - '**/*.json'
-  - '**/*.yml'
-  - '**/*.yaml'
 
 # Language-specific configuration
 languages:
@@ -42,27 +31,21 @@ languages:
   - name: php
     # Specify patterns for test files (used by some metrics/queries)
     test-patterns:
+      - '**/tests/**/*.php'
+      - '**/Test.php'
       - '**/*Test.php'
     # Configure indexing (fine-tune source file discovery)
     index:
-      # Explicitly include all .php files (usually default, but can be specific)
+      # Explicitly include all .php files
       include:
         - '**/*.php'
-      # Explicitly exclude vendor/tests (already covered by paths-ignore, but good practice)
+      # Explicitly exclude vendor and test dirs
       exclude:
         - '**/vendor/**'
-        - '**/tests/**'
-    # Configure extraction
-    extraction:
-      # Specify PHP version (should match version in Setup PHP step)
-      php:
-        version: '8.2'
-        # Include standard PHP libraries for better analysis
-        standard_library: true
-
-# Database configuration
+  
+# Database configuration to improve performance
 database:
   # Optimize database for better performance
   optimize: true
-  # Set maximum database size (e.g., 1GB)
+  # Set maximum database size (1GB)
   max-disk-space: 1024 # In MB
