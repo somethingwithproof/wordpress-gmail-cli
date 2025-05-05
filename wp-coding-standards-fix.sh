@@ -17,76 +17,76 @@ echo "Renaming files to follow WordPress naming conventions..."
 
 # Process src/Configuration
 if [ -d "src/Configuration" ]; then
-    mkdir -p includes/class-configuration
-    # Configuration class
-    if [ -f "src/Configuration/Configuration.php" ]; then
-        cp src/Configuration/Configuration.php includes/class-configuration.php
-    fi
+  mkdir -p includes/class-configuration
+  # Configuration class
+  if [ -f "src/Configuration/Configuration.php" ]; then
+    cp src/Configuration/Configuration.php includes/class-configuration.php
+  fi
 fi
 
 # Process src/Providers directory
 if [ -d "src/Providers" ]; then
-    mkdir -p includes/providers
-    
-    # Provider interface
-    if [ -f "src/Providers/ProviderInterface.php" ]; then
-        cp src/Providers/ProviderInterface.php includes/providers/interface-provider.php
-    fi
-    
-    # Abstract provider
-    if [ -f "src/Providers/AbstractProvider.php" ]; then
-        cp src/Providers/AbstractProvider.php includes/providers/abstract-provider.php
-    fi
-    
-    # Google provider
-    if [ -f "src/Providers/GoogleProvider.php" ]; then
-        cp src/Providers/GoogleProvider.php includes/providers/class-google-provider.php
-    fi
-    
-    # Provider factory
-    if [ -f "src/Providers/ProviderFactory.php" ]; then
-        cp src/Providers/ProviderFactory.php includes/providers/class-provider-factory.php
-    fi
+  mkdir -p includes/providers
+
+  # Provider interface
+  if [ -f "src/Providers/ProviderInterface.php" ]; then
+    cp src/Providers/ProviderInterface.php includes/providers/interface-provider.php
+  fi
+
+  # Abstract provider
+  if [ -f "src/Providers/AbstractProvider.php" ]; then
+    cp src/Providers/AbstractProvider.php includes/providers/abstract-provider.php
+  fi
+
+  # Google provider
+  if [ -f "src/Providers/GoogleProvider.php" ]; then
+    cp src/Providers/GoogleProvider.php includes/providers/class-google-provider.php
+  fi
+
+  # Provider factory
+  if [ -f "src/Providers/ProviderFactory.php" ]; then
+    cp src/Providers/ProviderFactory.php includes/providers/class-provider-factory.php
+  fi
 fi
 
 # Process src/Exception directory
 if [ -d "src/Exception" ]; then
-    mkdir -p includes/exceptions
-    
-    # Auth exception
-    if [ -f "src/Exception/AuthException.php" ]; then
-        cp src/Exception/AuthException.php includes/exceptions/class-auth-exception.php
-    fi
-    
-    # Config exception
-    if [ -f "src/Exception/ConfigException.php" ]; then
-        cp src/Exception/ConfigException.php includes/exceptions/class-config-exception.php
-    fi
-    
-    # Provider exception
-    if [ -f "src/Exception/ProviderException.php" ]; then
-        cp src/Exception/ProviderException.php includes/exceptions/class-provider-exception.php
-    fi
-    
-    # Rate limit exception
-    if [ -f "src/Exception/RateLimitException.php" ]; then
-        cp src/Exception/RateLimitException.php includes/exceptions/class-rate-limit-exception.php
-    fi
+  mkdir -p includes/exceptions
+
+  # Auth exception
+  if [ -f "src/Exception/AuthException.php" ]; then
+    cp src/Exception/AuthException.php includes/exceptions/class-auth-exception.php
+  fi
+
+  # Config exception
+  if [ -f "src/Exception/ConfigException.php" ]; then
+    cp src/Exception/ConfigException.php includes/exceptions/class-config-exception.php
+  fi
+
+  # Provider exception
+  if [ -f "src/Exception/ProviderException.php" ]; then
+    cp src/Exception/ProviderException.php includes/exceptions/class-provider-exception.php
+  fi
+
+  # Rate limit exception
+  if [ -f "src/Exception/RateLimitException.php" ]; then
+    cp src/Exception/RateLimitException.php includes/exceptions/class-rate-limit-exception.php
+  fi
 fi
 
 # Process src/Logging directory
 if [ -d "src/Logging" ]; then
-    mkdir -p includes/logging
-    
-    # Logger class
-    if [ -f "src/Logging/Logger.php" ]; then
-        cp src/Logging/Logger.php includes/logging/class-logger.php
-    fi
+  mkdir -p includes/logging
+
+  # Logger class
+  if [ -f "src/Logging/Logger.php" ]; then
+    cp src/Logging/Logger.php includes/logging/class-logger.php
+  fi
 fi
 
 # Plugin class
 if [ -f "src/Plugin.php" ]; then
-    cp src/Plugin.php includes/class-wp-social-auth.php
+  cp src/Plugin.php includes/class-wp-social-auth.php
 fi
 
 # 3. Run PHPCBF to fix indentation and other auto-fixable issues
@@ -95,7 +95,7 @@ vendor/bin/phpcbf --standard=WordPress includes/
 
 # 4. Run PHP fixer script to add doc blocks and fix class naming
 echo "Creating PHP fixer script..."
-cat > coding-standards-fixer.php << 'PHP_SCRIPT'
+cat >coding-standards-fixer.php <<'PHP_SCRIPT'
 <?php
 /**
  * WordPress Coding Standards Fixer
@@ -209,4 +209,3 @@ php coding-standards-fixer.php
 
 echo "WordPress Coding Standards Fix complete!"
 echo "Please review changes and make any necessary manual adjustments."
-
