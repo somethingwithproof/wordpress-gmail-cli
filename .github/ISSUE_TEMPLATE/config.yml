@@ -1,0 +1,13 @@
+
+blank_issues_enabled: false
+contact_links:
+  - name: WordPress Social Authentication Documentation
+    url: https://github.com/wordpress-gmail-cli/wp-social-auth/wiki
+    about: Check our documentation for help with installation and configuration
+  - name: Security Vulnerabilities
+    url: https://github.com/wordpress-gmail-cli/wp-social-auth/security/policy
+    about: Please report security vulnerabilities directly through GitHub's security advisory feature
+  - name: Discussions
+    url: https://github.com/wordpress-gmail-cli/wp-social-auth/discussions
+    about: For general questions, ideas, or non-bug related topics, please use Discussions
+
