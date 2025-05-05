@@ -1,4 +1,7 @@
 name: PHP Tests
+# Note: This workflow has been updated to only test against PHP 8.1+ as the current dependencies in
+# composer.lock require PHP 8.1 or higher. If PHP 7.4/8.0 support is needed, the composer.lock file
+# should be updated to include compatible dependencies.
 
 on:
   push:
@@ -14,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['7.4', '8.0', '8.1']
+        php: ['8.1']  # Only test with PHP 8.1+ as dependencies require PHP 8.1 or higher
         os: [ubuntu-latest]
         
     steps:
@@ -68,7 +71,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.4'
+          php-version: '8.1'
           extensions: mbstring, xml, zip, intl
           tools: composer:v2, phpcs
 
@@ -101,7 +104,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.0'
+          php-version: '8.1'
           extensions: mbstring, xml, zip, intl
           tools: composer:v2
 
@@ -134,7 +137,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.4'
+          php-version: '8.1'  # Using PHP 8.1 for compatibility with dependencies
           extensions: mbstring, xml, zip, intl
           tools: composer:v2, phpcs
 
@@ -144,5 +147,5 @@ jobs:
           composer require --dev phpcompatibility/php-compatibility
 
       - name: Check PHP Compatibility
-        run: vendor/bin/phpcs --standard=PHPCompatibility --runtime-set testVersion 7.4- --extensions=php src/
+        run: vendor/bin/phpcs --standard=PHPCompatibility --runtime-set testVersion 8.1- --extensions=php src/
 
