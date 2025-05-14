@@ -56,7 +56,7 @@ jobs:
 
       - name: Cache dependencies
         if: steps.check_php_files.outputs.php_files_exist == 'true'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -69,7 +69,7 @@ jobs:
 
       - name: Run Local PHP Security Checker
         if: steps.check_php_files.outputs.php_files_exist == 'true'
-        uses: symfonycorp/security-checker-action@v4
+        uses: symfonycorp/security-checker-action@v5
         with:
           lock: composer.lock
 
@@ -138,7 +138,7 @@ jobs:
 
       - name: Cache dependencies
         if: steps.check_php_files.outputs.php_files_exist == 'true'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -211,7 +211,7 @@ jobs:
 
       - name: Cache dependencies
         if: steps.check_php_files.outputs.php_files_exist == 'true'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
