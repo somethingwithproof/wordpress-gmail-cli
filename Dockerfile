@@ -39,9 +39,9 @@ RUN chmod +x /app/bin/*.sh && \
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
-# Add healthcheck
+# Add healthcheck - updated for PHP 8.4 compatibility
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD sh -c "/app/bin/wordpress-gmail-cli.sh --help > /dev/null || exit 1"
+  CMD sh -c "PHP_VERSION=$(php -v | head -n 1) && echo $PHP_VERSION | grep -q 'PHP 8.4' && /app/bin/wordpress-gmail-cli.sh --help > /dev/null || exit 1"
 
 # Set up entrypoint
 ENTRYPOINT ["/app/bin/wordpress-gmail-cli.sh"]

@@ -105,11 +105,9 @@ jobs:
         uses: trufflesecurity/trufflehog@v3.88.29 # Version pinned
         with:
           path: ./ # Scan the entire repo
-          # Compare current HEAD against the default branch (e.g., main)
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
-          # Only report verified secrets, enable debug logging
-          extra_args: --debug --only-verified
+          # Use filesystem scan rather than git scan to avoid BASE/HEAD comparison issues
+          extra_args: --debug --only-verified --no-update
+          # Remove base and head comparison which was causing errors when they're the same
 
   composer-audit:
     name: PHP Dependency Audit
