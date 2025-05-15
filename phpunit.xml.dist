@@ -26,6 +26,12 @@
         <testsuite name="Integration">
             <directory suffix="Test.php">./tests/Integration</directory>
         </testsuite>
+        <testsuite name="Functional">
+            <directory suffix="Test.php">./tests/Functional</directory>
+        </testsuite>
+        <testsuite name="All">
+            <directory suffix="Test.php">./tests</directory>
+        </testsuite>
     </testsuites>
     <php>
         <env name="WP_TESTS_MULTISITE" value="0"/>

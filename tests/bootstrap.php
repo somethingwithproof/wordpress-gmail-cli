@@ -13,10 +13,28 @@ if (!defined('WP_SOCIAL_AUTH_TESTING')) {
     define('WP_SOCIAL_AUTH_TESTING', true);
 }
 
-// Mock WordPress functions for tests if we're not in WordPress environment
-if (!function_exists('add_action')) {
-    require_once __DIR__ . '/wp-mock-functions.php';
+// Set up WP_Mock
+WP_Mock::bootstrap();
+
+// Additional WordPress mock constants - only define if not already defined
+if (!defined('ABSPATH')) {
+    define('ABSPATH', dirname(__FILE__) . '/dummy-wordpress/');
+}
+if (!defined('WP_DEBUG')) {
+    define('WP_DEBUG', true);
+}
+if (!defined('WP_CONTENT_DIR')) {
+    define('WP_CONTENT_DIR', ABSPATH . 'wp-content/');
+}
+if (!defined('WP_PLUGIN_DIR')) {
+    define('WP_PLUGIN_DIR', WP_CONTENT_DIR . 'plugins/');
+}
+if (!defined('WPINC')) {
+    define('WPINC', 'wp-includes');
 }
 
-// Add your custom bootstrap code here
+// Load our simple mock functions for cases not covered by WP_Mock
+require_once __DIR__ . '/wp-mock-functions.php';
+
+// Add custom bootstrap code here
 
