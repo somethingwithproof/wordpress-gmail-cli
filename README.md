@@ -229,9 +229,36 @@ docker-compose exec cli ./bin/wordpress-gmail-cli.sh --help
 # Access phpMyAdmin at http://localhost:8081
 ```
 
-## CI/CD and Security Features
+## Testing and Quality Assurance
 
-This project uses GitHub Actions for CI/CD and implements several security best practices:
+This project implements comprehensive testing using PHPUnit with multiple test suites:
+
+### Test Suites
+
+- **Unit Tests**: Test individual components in isolation
+- **Integration Tests**: Test interactions between components
+- **Functional Tests**: Test complete user flows and real-world scenarios
+
+### Running Tests
+
+```bash
+# Run all tests
+composer test
+
+# Run specific test suites
+composer test:unit
+composer test:integration
+composer test:functional
+
+# Generate code coverage report
+composer test:coverage
+```
+
+### Code Quality
+
+- PHPStan for static analysis: `composer phpstan`
+- PHP_CodeSniffer for coding standards: `composer phpcs`
+- Combined quality checks: `composer check`
 
 ### Continuous Integration
 
