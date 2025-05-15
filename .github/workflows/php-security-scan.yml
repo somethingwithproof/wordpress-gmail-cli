@@ -45,7 +45,7 @@ jobs:
         if: steps.check_php_files.outputs.php_files_exist == 'true'
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.4'
           tools: composer:v2
           coverage: none
 
@@ -127,7 +127,7 @@ jobs:
         if: steps.check_php_files.outputs.php_files_exist == 'true'
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.4'
           tools: composer:v2, psalm
           coverage: none
 
@@ -200,7 +200,7 @@ jobs:
         if: steps.check_php_files.outputs.php_files_exist == 'true'
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.4'
           tools: composer:v2
           coverage: none
 
