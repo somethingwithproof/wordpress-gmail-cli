@@ -50,7 +50,7 @@ jobs:
       - name: Install dependencies
         run: |
           if [ -f "composer.json" ]; then
-            composer update --prefer-dist --no-progress
+            composer update --prefer-dist --no-progress --with-all-dependencies
           fi
 
       - name: Run ShellCheck
@@ -145,7 +145,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.check-composer.outputs.exists == 'true'
-        run: composer update --prefer-dist --no-progress
+        run: composer update --prefer-dist --no-progress --with-all-dependencies
         continue-on-error: true
 
       - name: Run tests
