@@ -106,7 +106,7 @@ jobs:
         with:
           path: ./ # Scan the entire repo
           # Use filesystem scan rather than git scan to avoid BASE/HEAD comparison issues
-          extra_args: --debug --only-verified --no-update
+          extra_args: --debug --only-verified
           # Remove base and head comparison which was causing errors when they're the same
 
   composer-audit:
@@ -150,7 +150,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.check_composer.outputs.composer_exists == 'true'
-        run: composer install --prefer-dist --no-progress
+        run: composer update --prefer-dist --no-progress --with-all-dependencies
 
       - name: Run Composer Audit
         if: steps.check_composer.outputs.composer_exists == 'true'
