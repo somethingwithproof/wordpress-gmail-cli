@@ -65,7 +65,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.check_php_files.outputs.php_files_exist == 'true'
-        run: composer install --prefer-dist --no-progress --no-dev
+        run: composer update --prefer-dist --no-progress --no-dev --with-all-dependencies
 
       - name: Run Local PHP Security Checker
         if: steps.check_php_files.outputs.php_files_exist == 'true'
@@ -147,7 +147,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.check_php_files.outputs.php_files_exist == 'true'
-        run: composer install --prefer-dist --no-progress
+        run: composer update --prefer-dist --no-progress --with-all-dependencies
 
       - name: Create output directory
         if: steps.check_php_files.outputs.php_files_exist == 'true'
@@ -220,7 +220,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.check_php_files.outputs.php_files_exist == 'true'
-        run: composer install --prefer-dist --no-progress
+        run: composer update --prefer-dist --no-progress --with-all-dependencies
 
       - name: Install PHPCS security ruleset
         if: steps.check_php_files.outputs.php_files_exist == 'true'
