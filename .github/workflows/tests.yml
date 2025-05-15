@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.1']  # Only test with PHP 8.1+ as dependencies require PHP 8.1 or higher
+        php: ['8.1', '8.2', '8.4']  # Only testing with supported PHP versions (8.1+ as of May 2025)
         os: [ubuntu-latest]
         
     steps:
@@ -71,7 +71,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.4'
           extensions: mbstring, xml, zip, intl
           tools: composer:v2, phpcs
 
@@ -104,7 +104,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.4'
           extensions: mbstring, xml, zip, intl
           tools: composer:v2
 
@@ -137,7 +137,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'  # Using PHP 8.1 for compatibility with dependencies
+          php-version: '8.4'  # Using latest supported PHP version
           extensions: mbstring, xml, zip, intl
           tools: composer:v2, phpcs
 
