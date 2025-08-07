@@ -1,85 +1,36 @@
 version: 2
 updates:
-  # Enable version updates for GitHub Actions
+  # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "06:00"
-      timezone: "UTC"
+      time: "09:00"
     open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "github-actions"
-    commit-message:
-      prefix: "ci"
-      include: "scope"
     groups:
-      github-actions:
+      actions:
         patterns:
           - "*"
-    reviewers:
-      - "thomasvincent"
 
-  # Enable version updates for Docker
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "06:00"
-      timezone: "UTC"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "docker"
-    commit-message:
-      prefix: "docker"
-      include: "scope"
-    reviewers:
-      - "thomasvincent"
-
-  # Enable version updates for Composer
+  # composer
   - package-ecosystem: "composer"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "06:00"
-      timezone: "UTC"
+      time: "09:00"
+    open-pull-requests-limit: 10
     allow:
-      # Allow both direct and indirect updates for all packages
       - dependency-type: "all"
-    versioning-strategy: "increase-if-necessary"
-    open-pull-requests-limit: 15
-    labels:
-      - "dependencies"
-      - "php"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
-    ignore:
-      # Ignore major updates to core packages that might break compatibility
-      - dependency-name: "php"
-        versions: ["9.x"]
-      # Ignore major updates to other packages
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-    groups:
-      # Group minor and patch updates for dependencies
-      php-dependencies:
-        patterns:
-          - "psr/*"
-          - "monolog/*"
-      # Group security updates
-      security-updates:
-        patterns:
-          - "*"
-        update-types:
-          - "patch"
-    reviewers:
-      - "thomasvincent"
 
-  # Remove npm configuration as it's not used in the project
-  # Keeping only the ecosystems actually used in the project
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    allow:
+      - dependency-type: "all"
