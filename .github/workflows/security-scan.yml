@@ -26,7 +26,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@master
@@ -42,7 +42,7 @@ jobs:
       security-events: write  # To upload SARIF results
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # REQUIRED step before building
       - name: Set up Docker Buildx
@@ -96,13 +96,13 @@ jobs:
       security-events: write  # Potentially needed to upload results
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # Fetch full history for better comparison/scanning
           fetch-depth: 0
 
       - name: Run TruffleHog OSS Scan
-        uses: trufflesecurity/trufflehog@v3.89.2 # Version pinned
+        uses: trufflesecurity/trufflehog@v3.90.5 # Version pinned
         with:
           path: ./ # Scan the entire repo
           # Use filesystem scan rather than git scan to avoid BASE/HEAD comparison issues
@@ -116,7 +116,7 @@ jobs:
       contents: read          # REQUIRED for checkout
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Check if composer.json exists
         id: check_composer
