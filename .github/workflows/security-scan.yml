@@ -83,7 +83,7 @@ jobs:
       # Upload results to GitHub Security tab
       - name: Upload Trivy scan results
         if: steps.check_dockerfile.outputs.dockerfile_exists == 'true' && (success() || failure())
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results.sarif'
           category: 'trivy'
