@@ -99,7 +99,7 @@ jobs:
 
       - name: Upload PHP security results to GitHub Security tab
         if: steps.check_php_files.outputs.php_files_exist == 'true' && always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: security-reports/php-security-results.sarif
           category: 'php-security'
@@ -171,7 +171,7 @@ jobs:
 
       - name: Upload Psalm results to GitHub Security tab
         if: steps.check_php_files.outputs.php_files_exist == 'true' && hashFiles('security-reports/psalm-results.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: security-reports/psalm-results.sarif
           category: 'psalm-security'
@@ -246,7 +246,7 @@ jobs:
 
       - name: Upload PHPCS security results to GitHub Security tab
         if: steps.check_php_files.outputs.php_files_exist == 'true' && hashFiles('security-reports/phpcs-security.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: security-reports/phpcs-security.sarif
           category: 'phpcs-security'
