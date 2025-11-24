@@ -9,10 +9,22 @@ on:
   pull_request:
     branches: [ main ]
 
+# Cancel previous runs on the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+
+
+# Minimal permissions by default
+permissions:
+  contents: read
+
 jobs:
   test:
     name: PHP ${{ matrix.php }} - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15  # Prevent hung jobs
     
     strategy:
       fail-fast: false
@@ -63,6 +75,7 @@ jobs:
   coding-standards:
     name: Coding Standards
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent hung jobs
     
     steps:
       - name: Checkout code
@@ -96,6 +109,7 @@ jobs:
   static-analysis:
     name: Static Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent hung jobs
     
     steps:
       - name: Checkout code
@@ -129,6 +143,7 @@ jobs:
   php-compatibility:
     name: PHP Compatibility
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent hung jobs
     
     steps:
       - name: Checkout code

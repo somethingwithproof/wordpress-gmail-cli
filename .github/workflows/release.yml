@@ -15,6 +15,12 @@ on:
         required: true
         type: string
 
+# Cancel previous runs on the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+
 # Default permissions are read-only
 permissions: read-all
 
@@ -22,6 +28,7 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent hung jobs
     permissions:
       contents: write
       packages: write
@@ -108,6 +115,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent hung jobs
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
