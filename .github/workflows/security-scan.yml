@@ -26,7 +26,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@master
@@ -42,7 +42,7 @@ jobs:
       security-events: write  # To upload SARIF results
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       # REQUIRED step before building
       - name: Set up Docker Buildx
@@ -96,7 +96,7 @@ jobs:
       security-events: write  # Potentially needed to upload results
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           # Fetch full history for better comparison/scanning
           fetch-depth: 0
@@ -116,7 +116,7 @@ jobs:
       contents: read          # REQUIRED for checkout
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Check if composer.json exists
         id: check_composer
