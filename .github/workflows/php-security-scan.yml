@@ -18,6 +18,12 @@ on:
     - cron: '0 3 * * 3'  # Run weekly on Wednesday at 3am UTC
   workflow_dispatch:  # Allow manual triggering
 
+# Cancel previous runs on the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+
 # Default permissions are read-only
 permissions: read-all
 
@@ -25,6 +31,7 @@ jobs:
   php-security-checker:
     name: PHP Security Checker
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent hung jobs
     permissions:
       contents: read
       security-events: write
@@ -107,6 +114,7 @@ jobs:
   psalm-security-scan:
     name: Psalm Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent hung jobs
     permissions:
       contents: read
       security-events: write
@@ -180,6 +188,7 @@ jobs:
   phpcs-security-audit:
     name: PHPCS Security Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent hung jobs
     permissions:
       contents: read
       security-events: write
