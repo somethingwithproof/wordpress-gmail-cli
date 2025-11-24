@@ -1,0 +1,39 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: php-cs-fixer
+        name: PHP CS Fixer
+        entry: bash -c 'if [ -f vendor/bin/php-cs-fixer ]; then vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php; fi'
+        language: system
+        files: '\.php$'
+        pass_filenames: false
+
+      - id: phpcs
+        name: PHP CodeSniffer
+        entry: bash -c 'if [ -f vendor/bin/phpcs ]; then vendor/bin/phpcs --standard=PSR12; fi'
+        language: system
+        files: '\.php$'
+
+      - id: phpstan
+        name: PHPStan
+        entry: bash -c 'if [ -f vendor/bin/phpstan ]; then vendor/bin/phpstan analyse; fi'
+        language: system
+        files: '\.php$'
+        pass_filenames: false
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
