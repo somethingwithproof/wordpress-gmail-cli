@@ -15,6 +15,12 @@ on:
     - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight UTC
   workflow_dispatch:
 
+# Cancel previous runs on the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+
 # Default permissions are read-only
 permissions: read-all
 
@@ -22,6 +28,7 @@ jobs:
   shellcheck:
     name: ShellCheck
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent hung jobs
     permissions:
       contents: read
     steps:
@@ -37,6 +44,7 @@ jobs:
   trivy-scan:
     name: Trivy Vulnerability Scan (Container)
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent hung jobs
     permissions:
       contents: read          # To checkout code and build image
       security-events: write  # To upload SARIF results
@@ -91,6 +99,7 @@ jobs:
   secret-scan:
     name: Secret Scanning (TruffleHog)
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent hung jobs
     permissions:
       contents: read          # REQUIRED for checkout
       security-events: write  # Potentially needed to upload results
@@ -112,6 +121,7 @@ jobs:
   composer-audit:
     name: PHP Dependency Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent hung jobs
     permissions:
       contents: read          # REQUIRED for checkout
     steps:
