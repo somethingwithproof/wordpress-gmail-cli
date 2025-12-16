@@ -63,7 +63,7 @@ jobs:
 
       - name: Cache dependencies
         if: steps.check_php_files.outputs.php_files_exist == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -146,7 +146,7 @@ jobs:
 
       - name: Cache dependencies
         if: steps.check_php_files.outputs.php_files_exist == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -220,7 +220,7 @@ jobs:
 
       - name: Cache dependencies
         if: steps.check_php_files.outputs.php_files_exist == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
