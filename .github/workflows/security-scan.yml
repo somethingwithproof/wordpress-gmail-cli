@@ -111,7 +111,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run TruffleHog OSS Scan
-        uses: trufflesecurity/trufflehog@v3.91.1 # Version pinned
+        uses: trufflesecurity/trufflehog@v3.92.3 # Version pinned
         with:
           path: ./ # Scan the entire repo
           # Use filesystem scan rather than git scan to avoid BASE/HEAD comparison issues
@@ -151,7 +151,7 @@ jobs:
 
       - name: Cache dependencies
         if: steps.check_composer.outputs.composer_exists == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
