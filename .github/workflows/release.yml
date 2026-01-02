@@ -41,19 +41,24 @@ jobs:
 
       - name: Determine version
         id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          VERSION_INPUT: ${{ github.event.inputs.version }}
+          REF_NAME: ${{ github.ref_name }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          GITHUB_REF: ${{ github.ref }}
         run: |
           # Check if triggered by workflow_dispatch with version input
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            VERSION="${{ github.event.inputs.version }}"
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            VERSION="$VERSION_INPUT"
             echo "Source: Manual workflow dispatch"
           # Check if triggered by tag
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VERSION="${{ github.ref_name }}"
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="$REF_NAME"
             VERSION="${VERSION#v}"
             echo "Source: Tag push"
           # Check if triggered by commit message
-          elif [[ "${{ github.event_name }}" == "push" ]]; then
-            COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+          elif [[ "$EVENT_NAME" == "push" ]]; then
             if [[ "$COMMIT_MESSAGE" =~ chore:\ release\ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
               VERSION="${BASH_REMATCH[1]}"
               echo "Source: Commit message"
@@ -65,13 +70,13 @@ jobs:
             echo "Error: Could not determine version" >&2
             exit 1
           fi
-          
+
           # Validate version format
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Error: Invalid version format: $VERSION" >&2
             exit 1
           fi
-          
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version to release: $VERSION"
 
