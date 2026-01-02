@@ -36,4 +36,7 @@ jobs:
           npm install --no-package-lock --no-save @commitlint/cli @commitlint/config-conventional
 
       - name: Validate PR commits with commitlint
-        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --config .github/commitlint/config.js
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: npx commitlint --from "$BASE_SHA" --to "$HEAD_SHA" --config .github/commitlint/config.js
