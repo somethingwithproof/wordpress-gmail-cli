@@ -67,7 +67,7 @@ jobs:
           
       # Disable shfmt since it's causing issues, but keep shellcheck
       - name: Run shellcheck only (disable formatting check)
-        uses: luizm/action-sh-checker@v0.9.0
+        uses: luizm/action-sh-checker@v0.10.0
         env:
           SHFMT_OPTS: -i 2 -ci -bn
         with:
