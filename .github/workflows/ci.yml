@@ -61,7 +61,7 @@ jobs:
           fi
 
       - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@master
+        uses: ludeeus/action-shellcheck@00b27aa7cb85167568cb48a3838b75f4265f2bca
         with:
           severity: error
           
@@ -84,7 +84,6 @@ jobs:
           else
             echo "PHP_CodeSniffer not found, skipping check"
           fi
-        continue-on-error: true
 
       - name: Run PHPStan
         run: |
@@ -93,7 +92,6 @@ jobs:
           else
             echo "PHPStan not found, skipping check"
           fi
-        continue-on-error: true
 
       - name: Run PHP-CS-Fixer
         run: |
@@ -102,7 +100,6 @@ jobs:
           else
             echo "PHP-CS-Fixer or config not found, skipping check"
           fi
-        continue-on-error: true
 
   build-and-test:
     name: Build and Test
