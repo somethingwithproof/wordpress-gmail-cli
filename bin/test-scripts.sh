@@ -22,14 +22,14 @@ log() {
   local color=${RESET}
 
   case ${level} in
-    "INFO") color=${BLUE} ;;
-    "SUCCESS") color=${GREEN} ;;
-    "WARNING") color=${YELLOW} ;;
-    "ERROR") color=${RED} ;;
-    *)
-      echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${RESET}${level}${RESET}: ${message}" >&2
-      return
-      ;;
+  "INFO") color=${BLUE} ;;
+  "SUCCESS") color=${GREEN} ;;
+  "WARNING") color=${YELLOW} ;;
+  "ERROR") color=${RED} ;;
+  *)
+    echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${RESET}${level}${RESET}: ${message}" >&2
+    return
+    ;;
   esac
 
   echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${color}${level}${RESET}: ${message}"
