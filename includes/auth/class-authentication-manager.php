@@ -161,17 +161,42 @@ class Authentication_Manager {
     /**
      * Get client IP address.
      *
+     * Prioritizes REMOTE_ADDR as the most reliable source. Only uses forwarded
+     * headers (HTTP_X_FORWARDED_FOR, HTTP_CLIENT_IP) when explicitly allowed
+     * via the 'wp_social_auth_trust_proxy_headers' filter hook.
+     *
      * @return string IP address.
      */
     private function get_client_ip(): string {
-        $ip = '';
-        
-        if (isset($_SERVER['HTTP_CLIENT_IP'])) {
-            $ip = sanitize_text_field(wp_unslash($_SERVER['HTTP_CLIENT_IP']));
-        } elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ip = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR']));
-        } elseif (isset($_SERVER['REMOTE_ADDR'])) {
-            $ip = sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR']));
+        // Default to REMOTE_ADDR which is the most reliable source
+        $ip = isset($_SERVER['REMOTE_ADDR'])
+            ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR']))
+            : '';
+
+        /**
+         * Filter to control whether proxy headers should be trusted.
+         *
+         * Only enable this if your site is behind a reverse proxy (e.g., CloudFlare,
+         * load balancer) and you trust the proxy to set headers correctly.
+         *
+         * @since 1.0.0
+         *
+         * @param bool $trust_proxy_headers Whether to trust proxy headers. Default false.
+         */
+        $trust_proxy_headers = apply_filters('wp_social_auth_trust_proxy_headers', false);
+
+        if ($trust_proxy_headers) {
+            // Check HTTP_X_FORWARDED_FOR first (most common proxy header)
+            if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                $forwarded = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR']));
+                // Take the first IP in the chain (original client)
+                $ips = array_map('trim', explode(',', $forwarded));
+                if (!empty($ips[0])) {
+                    $ip = $ips[0];
+                }
+            } elseif (isset($_SERVER['HTTP_CLIENT_IP'])) {
+                $ip = sanitize_text_field(wp_unslash($_SERVER['HTTP_CLIENT_IP']));
+            }
         }
 
         return $ip;
