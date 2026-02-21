@@ -77,7 +77,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         if: steps.check_dockerfile.outputs.dockerfile_exists == 'true'
-        uses: aquasecurity/trivy-action@0.33.1 # PINNED VERSION
+        uses: aquasecurity/trivy-action@0.34.0 # PINNED VERSION
         with:
           image-ref: 'wordpress-gmail-cli:scan'
           # Output as SARIF for upload
