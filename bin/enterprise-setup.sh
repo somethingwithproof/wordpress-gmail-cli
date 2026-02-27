@@ -18,14 +18,14 @@ log() {
   local color=${RESET}
 
   case ${level} in
-    "INFO") color=${BLUE} ;;
-    "SUCCESS") color=${GREEN} ;;
-    "WARNING") color=${YELLOW} ;;
-    "ERROR") color=${RED} ;;
-    *)
-      color=${RESET}
-      echo "Unknown log level: ${level}" >&2
-      ;;
+  "INFO") color=${BLUE} ;;
+  "SUCCESS") color=${GREEN} ;;
+  "WARNING") color=${YELLOW} ;;
+  "ERROR") color=${RED} ;;
+  *)
+    color=${RESET}
+    echo "Unknown log level: ${level}" >&2
+    ;;
   esac
 
   echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] ${color}${level}${RESET}: ${message}"
@@ -831,46 +831,46 @@ fi
 while [[ $# -gt 0 ]]; do
   key="$1"
   case ${key} in
-    --vault)
-      ENABLE_VAULT=true
-      shift
-      ;;
-    --monitoring)
-      ENABLE_MONITORING=true
-      shift
-      ;;
-    --logging)
-      ENABLE_LOGGING=true
-      shift
-      ;;
-    --ldap)
-      ENABLE_LDAP=true
-      shift
-      ;;
-    --api)
-      ENABLE_API=true
-      shift
-      ;;
-    --load-balancing)
-      ENABLE_LOAD_BALANCING=true
-      shift
-      ;;
-    --all)
-      ENABLE_VAULT=true
-      ENABLE_MONITORING=true
-      ENABLE_LOGGING=true
-      ENABLE_LDAP=true
-      ENABLE_API=true
-      ENABLE_LOAD_BALANCING=true
-      shift
-      ;;
-    -h | --help)
-      usage
-      ;;
-    *)
-      log "ERROR" "Unknown option: $1"
-      usage
-      ;;
+  --vault)
+    ENABLE_VAULT=true
+    shift
+    ;;
+  --monitoring)
+    ENABLE_MONITORING=true
+    shift
+    ;;
+  --logging)
+    ENABLE_LOGGING=true
+    shift
+    ;;
+  --ldap)
+    ENABLE_LDAP=true
+    shift
+    ;;
+  --api)
+    ENABLE_API=true
+    shift
+    ;;
+  --load-balancing)
+    ENABLE_LOAD_BALANCING=true
+    shift
+    ;;
+  --all)
+    ENABLE_VAULT=true
+    ENABLE_MONITORING=true
+    ENABLE_LOGGING=true
+    ENABLE_LDAP=true
+    ENABLE_API=true
+    ENABLE_LOAD_BALANCING=true
+    shift
+    ;;
+  -h | --help)
+    usage
+    ;;
+  *)
+    log "ERROR" "Unknown option: $1"
+    usage
+    ;;
   esac
 done
 
