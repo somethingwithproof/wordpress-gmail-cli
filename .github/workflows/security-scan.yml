@@ -58,7 +58,7 @@ jobs:
 
       - name: Build Docker image for scanning
         # No need to push, just load locally for Trivy
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false
