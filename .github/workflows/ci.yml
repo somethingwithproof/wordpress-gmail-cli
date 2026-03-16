@@ -103,7 +103,7 @@ jobs:
 
   build-and-test:
     name: Build and Test
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15  # Prevent hung jobs
     needs: lint
     permissions:
@@ -173,7 +173,7 @@ jobs:
 
   docker-build:
     name: Docker Build
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15  # Prevent hung jobs
     needs: lint
     permissions:
