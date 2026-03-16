@@ -74,7 +74,7 @@ jobs:
 
   coding-standards:
     name: Coding Standards
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15  # Prevent hung jobs
     
     steps:
@@ -108,7 +108,7 @@ jobs:
 
   static-analysis:
     name: Static Analysis
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15  # Prevent hung jobs
     
     steps:
@@ -142,7 +142,7 @@ jobs:
 
   php-compatibility:
     name: PHP Compatibility
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15  # Prevent hung jobs
     
     steps:
