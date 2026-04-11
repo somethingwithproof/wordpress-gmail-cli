@@ -67,7 +67,7 @@ jobs:
         run: vendor/bin/phpunit --coverage-clover=coverage.xml || true  # Make tests non-blocking temporarily
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
