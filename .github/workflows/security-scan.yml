@@ -77,7 +77,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         if: steps.check_dockerfile.outputs.dockerfile_exists == 'true'
-        uses: aquasecurity/trivy-action@0.35.0 # PINNED VERSION
+        uses: aquasecurity/trivy-action@v0.36.0 # PINNED VERSION
         with:
           image-ref: 'wordpress-gmail-cli:scan'
           # Output as SARIF for upload
@@ -111,7 +111,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run TruffleHog OSS Scan
-        uses: trufflesecurity/trufflehog@v3.94.3 # Version pinned
+        uses: trufflesecurity/trufflehog@v3.95.2 # Version pinned
         with:
           path: ./ # Scan the entire repo
           # Use filesystem scan rather than git scan to avoid BASE/HEAD comparison issues
