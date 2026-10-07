@@ -3,7 +3,9 @@
 [![CI](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/ci.yml)
 [![Security Scan](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/security-scan.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/security-scan.yml)
 [![CodeQL](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/codeql.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/codeql.yml)
+[![Release](https://img.shields.io/github/v/release/somethingwithproof/wordpress-gmail-cli)](https://github.com/somethingwithproof/wordpress-gmail-cli/releases)
 [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/somethingwithproof/wordpress-gmail-cli/badge)](https://scorecard.dev/viewer/?uri=github.com/somethingwithproof/wordpress-gmail-cli)
 
 A simple CLI tool to quickly configure WordPress and Postfix for sending outbound emails using Google API. Ideal for automating reliable email delivery setup on your WordPress server, especially on platforms like Digital Ocean that block standard SMTP ports.
 
