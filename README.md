@@ -1,6 +1,7 @@
 # WordPress Gmail CLI
 
 [![CI](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/ci.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=somethingwithproof_wordpress-gmail-cli&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=somethingwithproof_wordpress-gmail-cli)
 [![Security Scan](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/security-scan.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/security-scan.yml)
 [![CodeQL](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/codeql.yml/badge.svg)](https://github.com/thomasvincent/wordpress-gmail-cli/actions/workflows/codeql.yml)
 [![Release](https://img.shields.io/github/v/release/somethingwithproof/wordpress-gmail-cli)](https://github.com/somethingwithproof/wordpress-gmail-cli/releases)
