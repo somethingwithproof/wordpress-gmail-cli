@@ -115,6 +115,10 @@ jobs:
                           or pr['isCrossRepository']
                           or not pr['headRefName'].startswith('dependabot/')):
                       continue
+                  # vendor/ is committed, so a lockfile-only bump needs a manual refresh.
+                  if pr['headRefName'].startswith('dependabot/composer/'):
+                      print(f'#{num}: skipped, composer PRs need a manual vendor/ refresh')
+                      continue
                   if not releasable(pr['title'], pr['body'] or ''):
                       print(f'#{num}: skipped, not a verified patch or minor')
                       continue
