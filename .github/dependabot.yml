@@ -23,7 +23,9 @@ updates:
           - "patch"
 
   # ========================================
-  # Composer (vendor/ is committed; Dependabot updates composer.json and composer.lock only)
+  # Composer (vendor/ is committed; Dependabot updates composer.json and composer.lock only.
+  # These PRs are not auto-merged: refresh vendor/ by hand with `composer update`
+  # so the shipped code and vendor/composer/installed.json match the lockfile.)
   # ========================================
   - package-ecosystem: "composer"
     directory: "/"
